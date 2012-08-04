@@ -63,6 +63,7 @@ class Amqpadapter:
         for commit in data['commits']:
           commit.update(self.g.get_commitinfo(commit['sha']))
         data['buildconfig'] = self.g.get_buildinfo(data['head'], self.config['project_configfile'])
+        data['repository_id'] = self.config['repository_id']
 
         connection = pika.BlockingConnection(pika.ConnectionParameters(
             host = self.config['hub_addr']))
