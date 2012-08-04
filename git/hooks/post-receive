@@ -1,0 +1,55 @@
+#!/usr/bin/python
+#
+# 2012 patrick.atamaniuk@wibas.de
+# requires python2.7
+# requires pika
+# get .travis.yml: git show HEAD~4:index.html > local_file
+
+import sys,os,re
+import subprocess
+import simplejson
+import pika
+
+THIS_REPO='example_repo'
+RABBITMQ_SERVER='localhost'
+RABBITMQ_QUEUE='myownci.git.commit'
+PROJECT_CONFIGFILE='.travis.yml'
+
+zero = re.compile(r'^0{40}')
+
+def get_configfile(commit):
+    return subprocess.check_output(['git', 'show', '%s:%s' % (commit, PROJECT_CONFIGFILE) ])
+
+def send(payload):
+    connection = pika.BlockingConnection(pika.ConnectionParameters(
+        host = RABBITMQ_SERVER))
+    channel = connection.channel()
+
+    channel.queue_declare(queue=RABBITMQ_QUEUE, durable=True)
+
+    channel.basic_publish(exchange = '',
+                      routing_key = RABBITMQ_QUEUE,
+                      body = payload,
+                      properties = pika.BasicProperties(
+                       delivery_mode = 2, # make message persistent
+                     ))
+    print " [x] Notified CI."
+    connection.close()
+
+git_dir = os.path.basename(os.path.abspath(os.environ['GIT_DIR']).strip()).replace('.git','')
+old = ''
+new = ''
+for line in sys.stdin.readlines():
+    (old, new, ref) = line.strip().split(" ")[:3]
+    if zero.match(new): continue 
+    if old == new: continue
+if new:
+    send(simplejson.dumps({
+        'projectconfig':get_configfile(new),
+        'commit': new,
+        'ref': ref,
+        'repo': THIS_REPO,
+        'git_dir': git_dir
+        })
+    )
+sys.exit(0)
