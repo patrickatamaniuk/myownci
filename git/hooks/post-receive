@@ -6,6 +6,7 @@
 # get .travis.yml: git show HEAD~4:index.html > local_file
 
 import sys,os,re
+import time
 import simplejson
 import pika
 from git import Repo
@@ -70,8 +71,11 @@ class Amqpadapter:
                       routing_key = RABBITMQ_QUEUE,
                       body = simplejson.dumps(payload),
                       properties = pika.BasicProperties(
+                        app_id = 'myownci.git.hooks.post-receive',
                         content_type = 'application/json',
+                        timestamp = time.time(),
                         delivery_mode = 2, # make message persistent
+                        headers = {}
                      ))
         connection.close()
         print " [x] Notified CI."
