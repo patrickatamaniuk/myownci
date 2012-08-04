@@ -2,13 +2,13 @@
 #
 # 2012 patrick.atamaniuk@wibas.de
 # requires python2.7
-# requires pika
+# requires pika, gitpython
 # get .travis.yml: git show HEAD~4:index.html > local_file
 
 import sys,os,re
-import subprocess
 import simplejson
 import pika
+from git import Repo
 
 THIS_REPO='example_repo'
 RABBITMQ_SERVER='localhost'
@@ -17,39 +17,74 @@ PROJECT_CONFIGFILE='.travis.yml'
 
 zero = re.compile(r'^0{40}')
 
-def get_configfile(commit):
-    return subprocess.check_output(['git', 'show', '%s:%s' % (commit, PROJECT_CONFIGFILE) ])
+class ConfigurationError(Exception): pass
 
-def send(payload):
-    connection = pika.BlockingConnection(pika.ConnectionParameters(
-        host = RABBITMQ_SERVER))
-    channel = connection.channel()
+class Gitaccess:
+    def __init__(self):
+        self.repo = Repo.init(".", bare=True)
 
-    channel.queue_declare(queue=RABBITMQ_QUEUE, durable=True)
+    def get_config(self):
+        self.reader = self.repo.config_reader()
+# may raise ConfigParser.NoSectionError ConfigParser.NoOptionError 
+        return {
+          'hub_addr': self.reader.get('myownci', 'hub-addr'),
+          'repository_id': self.reader.get('myownci', 'repository-id'),
+          'project_configfile': self.reader.get('myownci', 'project-configfile')
+        }
 
-    channel.basic_publish(exchange = '',
+    def get_commitinfo(self, hexsha):
+        tree = self.repo.tree(hexsha)
+        try:
+            project_configfile = tree[PROJECT_CONFIGFILE]
+            buildconfig = project_configfile.data_stream.read()
+        except KeyError: #file not found in repo
+            raise ConfigurationError
+
+        commit = self.repo.commit(hexsha)
+        return {
+            'commit': hexsha,
+            'author': {'name':commit.author.name, 'email':commit.author.email},
+            'committer': {'name':commit.committer.name, 'email':commit.committer.email},
+            'committed_date': commit.committed_date,
+            'commitmessage': commit.message,
+            'buildconfig': buildconfig
+        }
+
+class Amqpadapter:
+    def __init__(self):
+        self.g = Gitaccess()
+        self.config = self.g.get_config()
+
+    def send(self, commit, extradata = None):
+        payload = self.g.get_commitinfo(commit)
+        if extradata:
+          payload.update(extradata)
+
+        connection = pika.BlockingConnection(pika.ConnectionParameters(
+            host = RABBITMQ_SERVER))
+        channel = connection.channel()
+
+        channel.queue_declare(queue=RABBITMQ_QUEUE, durable=True)
+
+        channel.basic_publish(exchange = '',
                       routing_key = RABBITMQ_QUEUE,
-                      body = payload,
+                      body = simplejson.dumps(payload),
                       properties = pika.BasicProperties(
                        delivery_mode = 2, # make message persistent
                      ))
-    print " [x] Notified CI."
-    connection.close()
+        connection.close()
+        print " [x] Notified CI."
 
-git_dir = os.path.basename(os.path.abspath(os.environ['GIT_DIR']).strip()).replace('.git','')
-old = ''
-new = ''
-for line in sys.stdin.readlines():
-    (old, new, ref) = line.strip().split(" ")[:3]
-    if zero.match(new): continue 
-    if old == new: continue
-if new:
-    send(simplejson.dumps({
-        'projectconfig':get_configfile(new),
-        'commit': new,
-        'ref': ref,
-        'repo': THIS_REPO,
-        'git_dir': git_dir
-        })
-    )
+def main():
+    old = ''
+    new = ''
+    for line in sys.stdin.readlines():
+        (old, new, ref) = line.strip().split(" ")[:3]
+        if zero.match(new): continue 
+        if old == new: continue
+    if new:
+        Amqpadapter().send(new, { 'ref': ref, })
+
+if __name__ == '__main__':
+    main()
 sys.exit(0)

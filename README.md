@@ -13,24 +13,17 @@ Concept
 System layout:
 
     repository     hub           management server vmhost         worker vm
-    commit-hook -> ampq queue -> analyzer ->       kvm control -> job control
+    commit-hook -> amqp queue -> analyzer ->       kvm control -> job control
 
 Installation
 ============
-
-Repository hook
----------------
-
-Install git/hooks/post-receive into your repository hooks, make it executable
-
-Configure repository identification
 
 Hub
 ---
 
 * deploy rabbitmq server
 
-Note: Vm hosts, Worker vms and Management server need ampq access to this host.
+Note: Vm hosts, Worker vms and Management server need amqp access to this host.
 Can run on git server
 
 Management server
@@ -59,6 +52,31 @@ Minimal Requirements:
 
 Setup and Configuration
 =======================
+
+Repository hook
+---------------
+
+Prerequisites:
+
+    sudo apt-get install pip
+    sudo pip install gitpython
+    sudo pip install pike
+
+Install git/hooks/post-receive into your repository hooks, make it executable
+
+Configure repository identification (on the git repository server which is pushed to)
+
+    git config --add myownci.repository-id the_unique_name_which_is_configured_in_management_server
+    git config --add myownci.hub-addr ip_or_fqdn_of_amqp_host
+    git config --add myownci.project-configfile .travis.yml_compatible_build_description
+
+Example:
+
+    apikey = foobarbazxizzy
+    project-configfile = .travis.yml
+    hub-addr = 127.0.0.1
+    repository-id = myownci@git-home
+
 
 Define Vm hosts
 ---------------
