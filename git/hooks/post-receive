@@ -3,7 +3,10 @@
 # 2012 patrick.atamaniuk@wibas.de
 # requires python2.7
 # requires pika, gitpython
-# get .travis.yml: git show HEAD~4:index.html > local_file
+# 
+# sends github-json-api like push events
+#
+
 
 import sys,os,re
 import time
@@ -11,10 +14,8 @@ import simplejson
 import pika
 from git import Repo
 
-THIS_REPO='example_repo'
-RABBITMQ_SERVER='localhost'
-RABBITMQ_QUEUE='myownci.git.commit'
-PROJECT_CONFIGFILE='.travis.yml'
+RABBITMQ_QUEUE = 'myownci.git.commit'
+APP_ID = 'myownci.git.hooks.post-receive'
 
 zero = re.compile(r'^0{40}')
 
@@ -34,62 +35,73 @@ class Gitaccess:
         }
 
     def get_commitinfo(self, hexsha):
-        tree = self.repo.tree(hexsha)
-        try:
-            project_configfile = tree[PROJECT_CONFIGFILE]
-            buildconfig = project_configfile.data_stream.read()
-        except KeyError: #file not found in repo
-            raise ConfigurationError
-
         commit = self.repo.commit(hexsha)
         return {
-            'commit': hexsha,
+            'sha': hexsha,
             'author': {'name':commit.author.name, 'email':commit.author.email},
             'committer': {'name':commit.committer.name, 'email':commit.committer.email},
             'committed_date': commit.committed_date,
-            'commitmessage': commit.message,
-            'buildconfig': buildconfig
+            'message': commit.message,
+            'url': ''
         }
+    def get_buildinfo(self, hexsha, filename):
+        tree = self.repo.tree(hexsha)
+        buildconfig = ''
+        try:
+            project_configfile = tree[filename]
+            buildconfig = project_configfile.data_stream.read()
+        except KeyError: #file not found in repo
+            raise ConfigurationError
+        return buildconfig
 
 class Amqpadapter:
     def __init__(self):
         self.g = Gitaccess()
         self.config = self.g.get_config()
 
-    def send(self, commit, extradata = None):
-        payload = self.g.get_commitinfo(commit)
-        if extradata:
-          payload.update(extradata)
+    def send(self, commit, data = None):
+        for commit in data['commits']:
+          commit.update(self.g.get_commitinfo(commit['sha']))
+        data['buildconfig'] = self.g.get_buildinfo(data['head'], self.config['project_configfile'])
 
         connection = pika.BlockingConnection(pika.ConnectionParameters(
-            host = RABBITMQ_SERVER))
+            host = self.config['hub_addr']))
         channel = connection.channel()
 
         channel.queue_declare(queue=RABBITMQ_QUEUE, durable=True)
 
         channel.basic_publish(exchange = '',
                       routing_key = RABBITMQ_QUEUE,
-                      body = simplejson.dumps(payload),
+                      body = simplejson.dumps(data),
                       properties = pika.BasicProperties(
-                        app_id = 'myownci.git.hooks.post-receive',
+                        app_id = APP_ID,
                         content_type = 'application/json',
                         timestamp = time.time(),
                         delivery_mode = 2, # make message persistent
                         headers = {}
                      ))
         connection.close()
-        print " [x] Notified CI."
+        print " [ok] Notified CI."
 
 def main():
+    commits = []
     old = ''
     new = ''
     for line in sys.stdin.readlines():
         (old, new, ref) = line.strip().split(" ")[:3]
         if zero.match(new): continue 
         if old == new: continue
-    if new:
-        Amqpadapter().send(new, { 'ref': ref, })
+        commits.append({'sha':new})
+    Amqpadapter().send(new, { 
+        'ref': ref,
+        'size': len(commits),
+        'head': new,
+        'commits': commits })
 
 if __name__ == '__main__':
+  try:
     main()
+  except Exception, e:
+    print("CI notify: An error has occured: %s" %repr(e))
+    #raise
 sys.exit(0)
