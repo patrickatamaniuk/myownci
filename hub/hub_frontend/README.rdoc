@@ -1,0 +1,13 @@
+= MyOwnCi web frontend
+
+== Compatibility
+
+Rails 3 required
+Postgresql required
+
+== Database setup
+
+  bundle exec rake db:create
+  bundle exec rake db:migrate
+  bundle exec rake db:seed
+

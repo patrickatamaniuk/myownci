@@ -1,0 +1,11 @@
+# Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/Fixtures.html
+
+one:
+  repo: MyString
+  commit: MyString
+  created: 2012-07-31 13:13:27
+
+two:
+  repo: MyString
+  commit: MyString
+  created: 2012-07-31 13:13:27

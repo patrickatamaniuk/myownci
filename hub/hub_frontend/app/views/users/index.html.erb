@@ -1,0 +1,12 @@
+<table>
+<% @users.each do |u| %>
+  <tr>
+    <td><%= link_to_if(can?(:read, User), "#{u.name}", user_path(u.id)) {} %></td>
+    <td><%= "#{u.email}" %></td>
+    <td><%= "#{u.roles.map{|r| r.name}.join(', ')}" %></td>
+    <td><%= link_to_if(can?(:edit, User), "edit", edit_user_path(u.id)) {} %></td>
+    <td><%= link_to_if(can?(:delete, u), "delete", u, :confirm => "Are you sure?", :method => :delete) {} %></td>
+  </tr>
+<% end %>
+</table>
+<%= link_to_if(can?(:create, User), "New user", new_user_path) %>

@@ -1,0 +1,30 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <b>Name:</b>
+  <%= @worker.name %>
+</p>
+
+<p>
+  <b>Ip:</b>
+  <%= @worker.ip %>
+</p>
+
+<p>
+  <b>Vmimage:</b>
+  <%= @worker.vmimage %>
+</p>
+
+<p>
+  <b>Vmname:</b>
+  <%= @worker.vmname %>
+</p>
+
+<p>
+  <b>Snapshottag:</b>
+  <%= @worker.snapshottag %>
+</p>
+
+
+<%= link_to 'Edit', edit_worker_path(@worker) %> |
+<%= link_to 'Back', workers_path %>

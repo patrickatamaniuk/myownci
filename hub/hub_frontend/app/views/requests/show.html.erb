@@ -1,0 +1,20 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <b>Repo:</b>
+  <%= @request.repo %>
+</p>
+
+<p>
+  <b>Commit:</b>
+  <%= @request.commit %>
+</p>
+
+<p>
+  <b>Created:</b>
+  <%= @request.created %>
+</p>
+
+
+<%= link_to 'Edit', edit_request_path(@request) %> |
+<%= link_to 'Back', requests_path %>

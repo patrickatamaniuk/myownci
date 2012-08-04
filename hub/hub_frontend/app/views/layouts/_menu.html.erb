@@ -1,0 +1,6 @@
+<li><%= link_to_if(can?(:read, "/"), "Home", root_path) %></li>
+<li><%= link_to_if(can?(:read, Job), "Jobs", jobs_path) %></li>
+<li><%= link_to_if(can?(:read, Worker), "Workers", workers_path) %></li>
+<li><%= link_to_if(can?(:read, Request), "Requests", requests_path) %></li>
+<li><%= link_to_if(can?(:read, User), "Users", users_path) %></li>
+
