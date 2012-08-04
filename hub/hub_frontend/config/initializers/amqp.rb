@@ -37,8 +37,8 @@ if defined?(PhusionPassenger) # otherwise it breaks rake commands if you put thi
       start_amqp_in_thread
     end
   end
-else #assume webrick
-  require 'eventmachine'
+elsif defined?(::WEBrick) #when started with 'rails server'. 'rackup' does not work.
   require 'amqp'
+  require 'eventmachine'
   start_amqp_in_thread
-end
+end #else rake task
