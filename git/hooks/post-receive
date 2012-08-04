@@ -70,7 +70,8 @@ class Amqpadapter:
                       routing_key = RABBITMQ_QUEUE,
                       body = simplejson.dumps(payload),
                       properties = pika.BasicProperties(
-                       delivery_mode = 2, # make message persistent
+                        content_type = 'application/json',
+                        delivery_mode = 2, # make message persistent
                      ))
         connection.close()
         print " [x] Notified CI."
