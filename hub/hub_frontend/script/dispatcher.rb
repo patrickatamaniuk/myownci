@@ -5,23 +5,10 @@ require "json"
 
 require "requests_helper"
 
-puts "Starting."
+Rails.logger.info "[AMQPd] Initializing amqp..."
 EventMachine.run do
-  connection = AMQP.connect
-  channel    = AMQP::Channel.new(connection)
-  queue_name = "myownci.git.commit"
-
-  requests_queue = channel.queue(queue_name, :durable => true)
-  requests_queue.subscribe(:ack => true) do |metadata, payload|
-    data = {}
-    data = JSON.parse(payload) if payload
-    Rails.logger.info("[AMQP] Received app:\"#{metadata.app_id}\" repository_id:\"#{data['repository_id'] if data['repository_id']}\" from queue:#{queue_name}")
-    RequestsHelper::create_from_push(data)
-
-    metadata.ack
-  end
-
+  Hub::Loop.run
 
   Signal.trap("INT") { connection.close { EventMachine.stop } }
 end
-puts "End."
+Rails.logger.info "[AMQPd] done."
