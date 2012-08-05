@@ -18,7 +18,7 @@ def start_amqp_in_thread
     queue_name = "myownci.git.commit"
     AMQP.channel.queue(queue_name, :durable => true).subscribe(:ack => true) do |metadata, payload|
       data = {}
-      data = JSON.parser.new(payload).parse() if payload
+      data = JSON.parse(payload) if payload
       Rails.logger.info("[AMQP] Received app:\"#{metadata.app_id}\" repository_id:\"#{data['repository_id'] if data['repository_id']}\" from queue:#{queue_name}")
       RequestsHelper::create_from_push(data)
       metadata.ack
