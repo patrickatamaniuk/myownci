@@ -6,8 +6,8 @@ class Ability
 
     if user.role? :admin
       can :manage, :all
-    elsif user.role? :committer
-      can :read, [Requests, Jobs]
+    elsif user.role? :worker
+      can :read, [Request, Job]
     end
   end
 end

@@ -13,7 +13,7 @@ Rpcserver::Application.routes.draw do
 
   resources :jobs
 
-  resources :requests
+  resources :requests, :only => [:index, :show, :destroy]
 
   resources :workers
 

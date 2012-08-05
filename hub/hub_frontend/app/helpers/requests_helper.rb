@@ -13,12 +13,14 @@ module RequestsHelper
     save_data[:commit] = data['head']
     save_data[:repo] = data['repository_id']
     data['commits'].each{|commit|
+      Rails.logger.info("checking #{commit['sha']} against #{data['head']}")
       if commit['sha'] == data['head']
-        save_data[:author_name] = commit['author_name']
-        save_data[:author_email] = commit['author_email']
-        save_data[:committer_name] = commit['committer_name']
-        save_data[:committer_email] = commit['committer_email']
-        #save_data[:committed_date] = commit['committed_date']
+        Rails.logger.info("#{commit}")
+        save_data[:author_name] = commit['author']['name']
+        save_data[:author_email] = commit['author']['email']
+        save_data[:committer_name] = commit['committer']['name']
+        save_data[:committer_email] = commit['committer']['email']
+        save_data[:committed_date] = Time.at(commit['committed_date'])
         break
       end
     }

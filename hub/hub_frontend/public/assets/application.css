@@ -22,6 +22,25 @@
      display: inline;  
  }
 
+ li.menu-right {
+   float: right;
+ }
+/* line 1, ../../app/assets/stylesheets/indextables.css.scss */
+table {
+  border-collapse: collapse;
+}
+/* line 3, ../../app/assets/stylesheets/indextables.css.scss */
+table tr.odd td {
+  background-color: #ddd;
+}
+/* line 6, ../../app/assets/stylesheets/indextables.css.scss */
+table tr.even td {
+  background-color: #eee;
+}
+/* line 9, ../../app/assets/stylesheets/indextables.css.scss */
+table td {
+  padding: 4px;
+}
 /* line 1, ../../app/assets/stylesheets/scaffolds.css.scss */
 body {
   background-color: #fff;
