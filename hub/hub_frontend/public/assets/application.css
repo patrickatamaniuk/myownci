@@ -9,93 +9,63 @@
  * compiled file, but it's generally better to create a new file per style scope.
  *
 
-
  */
-
- ul.hmenu {
-     list-style: none;  
-       margin: 0 0 2em;
-         padding: 0;
- }
-
- ul.hmenu li {
-     display: inline;  
- }
-
- li.menu-right {
-   float: right;
- }
-/* line 1, ../../app/assets/stylesheets/indextables.css.scss */
-table {
-  border-collapse: collapse;
-}
-/* line 3, ../../app/assets/stylesheets/indextables.css.scss */
-table tr.odd td {
-  background-color: #ddd;
-}
-/* line 6, ../../app/assets/stylesheets/indextables.css.scss */
-table tr.even td {
-  background-color: #eee;
-}
-/* line 9, ../../app/assets/stylesheets/indextables.css.scss */
-table td {
-  padding: 4px;
-}
-/* line 1, ../../app/assets/stylesheets/scaffolds.css.scss */
+/* line 1, ../../app/assets/stylesheets/_scaffolds.css.scss */
 body {
+  margin: 12px;
   background-color: #fff;
-  color: #333;
+  color: #4a5968;
   font-family: verdana, arial, helvetica, sans-serif;
   font-size: 13px;
   line-height: 18px;
 }
 
-/* line 8, ../../app/assets/stylesheets/scaffolds.css.scss */
+/* line 9, ../../app/assets/stylesheets/_scaffolds.css.scss */
+h1, h2, h3 {
+  color: #005aa2;
+}
+
+/* line 13, ../../app/assets/stylesheets/_scaffolds.css.scss */
 p, ol, ul, td {
   font-family: verdana, arial, helvetica, sans-serif;
   font-size: 13px;
   line-height: 18px;
 }
 
-/* line 13, ../../app/assets/stylesheets/scaffolds.css.scss */
+/* line 18, ../../app/assets/stylesheets/_scaffolds.css.scss */
 pre {
   background-color: #eee;
   padding: 10px;
   font-size: 11px;
 }
 
-/* line 18, ../../app/assets/stylesheets/scaffolds.css.scss */
+/* line 23, ../../app/assets/stylesheets/_scaffolds.css.scss */
 a {
-  color: #000;
+  color: #4a5968;
 }
-/* line 20, ../../app/assets/stylesheets/scaffolds.css.scss */
-a:visited {
-  color: #666;
-}
-/* line 22, ../../app/assets/stylesheets/scaffolds.css.scss */
+/* line 25, ../../app/assets/stylesheets/_scaffolds.css.scss */
 a:hover {
-  color: #fff;
-  background-color: #000;
+  color: #89939d;
 }
 
-/* line 27, ../../app/assets/stylesheets/scaffolds.css.scss */
+/* line 29, ../../app/assets/stylesheets/_scaffolds.css.scss */
 div.field, div.actions {
   margin-bottom: 10px;
 }
 
-/* line 30, ../../app/assets/stylesheets/scaffolds.css.scss */
+/* line 32, ../../app/assets/stylesheets/_scaffolds.css.scss */
 #notice {
   color: green;
 }
 
-/* line 33, ../../app/assets/stylesheets/scaffolds.css.scss */
+/* line 35, ../../app/assets/stylesheets/_scaffolds.css.scss */
 .field_with_errors {
   padding: 2px;
   background-color: red;
   display: table;
 }
 
-/* line 38, ../../app/assets/stylesheets/scaffolds.css.scss */
+/* line 40, ../../app/assets/stylesheets/_scaffolds.css.scss */
 #error_explanation {
   width: 450px;
   border: 2px solid red;
@@ -104,7 +74,7 @@ div.field, div.actions {
   margin-bottom: 20px;
   background-color: #f0f0f0;
 }
-/* line 45, ../../app/assets/stylesheets/scaffolds.css.scss */
+/* line 47, ../../app/assets/stylesheets/_scaffolds.css.scss */
 #error_explanation h2 {
   text-align: left;
   font-weight: bold;
@@ -115,8 +85,58 @@ div.field, div.actions {
   background-color: #c00;
   color: #fff;
 }
-/* line 54, ../../app/assets/stylesheets/scaffolds.css.scss */
+/* line 56, ../../app/assets/stylesheets/_scaffolds.css.scss */
 #error_explanation ul li {
   font-size: 12px;
   list-style: square;
+}
+
+/* line 1, ../../app/assets/stylesheets/_menu.css.scss */
+.menu {
+  padding: 4px;
+  height: 21px;
+  color: white;
+  background-color: #005aa2;
+}
+/* line 6, ../../app/assets/stylesheets/_menu.css.scss */
+.menu a {
+  color: white;
+}
+/* line 8, ../../app/assets/stylesheets/_menu.css.scss */
+.menu a:hover {
+  color: #89939d;
+}
+/* line 11, ../../app/assets/stylesheets/_menu.css.scss */
+.menu ul.hmenu {
+  list-style: none;
+  margin: 0 0 2em;
+  padding: 0;
+}
+/* line 17, ../../app/assets/stylesheets/_menu.css.scss */
+.menu ul.hmenu li {
+  display: inline;
+  padding-left: 2px;
+  padding-right: 2px;
+}
+/* line 23, ../../app/assets/stylesheets/_menu.css.scss */
+.menu li.menu-right {
+  float: right;
+}
+
+/* line 1, ../../app/assets/stylesheets/_indextables.css.scss */
+table {
+  border-collapse: collapse;
+}
+/* line 3, ../../app/assets/stylesheets/_indextables.css.scss */
+table tr.odd td {
+  background-color: #ddd;
+}
+/* line 6, ../../app/assets/stylesheets/_indextables.css.scss */
+table tr.even td {
+  background-color: #eee;
+}
+/* line 9, ../../app/assets/stylesheets/_indextables.css.scss */
+table td {
+  padding: 4px;
+  padding-right: 8px;
 }

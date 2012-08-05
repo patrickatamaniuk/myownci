@@ -1,0 +1,27 @@
+.menu {
+  padding: 4px;
+  height: 21px;
+  color: $menu-color;
+  background-color: $menu-background-color;
+  a {
+    color: $menu-color;
+    &:hover { color: $text-med; }
+  }
+
+ ul.hmenu {
+     list-style: none;
+     margin: 0 0 2em;
+     padding: 0;
+ }
+
+ ul.hmenu li {
+     display: inline;
+     padding-left: 2px;
+     padding-right: 2px;
+ }
+
+ li.menu-right {
+   float: right;
+ }
+
+}
