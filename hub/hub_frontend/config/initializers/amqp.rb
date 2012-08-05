@@ -1,4 +1,5 @@
 require 'json'
+include RequestsHelper
 
 def start_amqp_in_thread
   Rails.logger.info "[AMQP] Initializing amqp..."
@@ -19,9 +20,7 @@ def start_amqp_in_thread
       data = {}
       data = JSON.parser.new(payload).parse() if payload
       Rails.logger.info("[AMQP] Received app:\"#{metadata.app_id}\" repository_id:\"#{data['repository_id'] if data['repository_id']}\" from queue:#{queue_name}")
-      data.each{|k, v|
-        Rails.logger.info("  #{k} => #{v}")
-      }
+      RequestsHelper::create_from_push(data)
       metadata.ack
     end
 

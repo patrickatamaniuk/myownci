@@ -12,7 +12,12 @@
 
 <p>
   <b>Created:</b>
-  <%= @request.created %>
+  <%= @request.created_at %>
+</p>
+
+<p>
+  <b>Buildconfig:</b>
+  <pre><%= @request.buildconfig %></pre>
 </p>
 
 
