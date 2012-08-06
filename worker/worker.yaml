@@ -1,0 +1,16 @@
+amqp-server: 10.1.1.203
+config:
+- capabilities: [ruby, python]
+  name: precise-ci
+  os: ubuntu
+  release: '12.04'
+host-uuid: f7bf4899-6b87-4ef0-b704-a12c455b718b
+hostname: precise-ci
+identity:
+  architecture: 64bit
+  distribution: [Ubuntu, '12.04', precise]
+  exeformat: ELF
+  hwaddrlist: ['00:50:56:00:11:02', '52:54:00:5a:79:02']
+  nodename: precise-ci
+  processor: x86_64
+  system: Linux
