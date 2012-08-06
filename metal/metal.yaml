@@ -1,0 +1,14 @@
+---
+hostname: videohorst
+host-uuid: b6de1cfa-a844-45b3-91c0-3a3cb21be638
+amqp-server: 127.0.0.1
+workers:
+  - name: precise-ci
+    os: ubuntu
+    release: "12.04"
+    capabilities: [ruby, python]
+  - name: rhel6-ci
+    os: redhat
+    release: "6.02"
+    capabilities: [python]
+

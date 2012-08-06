@@ -39,6 +39,12 @@ Vm hosts
 
 Needs to be on the bare host system as it will start/shutdown/reset vm guests.
 
+Requirements:
+
+* pip
+* simpleyaml
+* pike
+
 Worker vms
 ----------
 
