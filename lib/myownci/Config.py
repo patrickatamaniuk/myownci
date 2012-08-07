@@ -2,7 +2,7 @@ import os
 import simpleyaml
 
 class Config:
-    configfilename = 'metal.yaml'
+    configfilename = 'client.yaml'
 
     def __init__(self, configfilename=None):
         if configfilename:
