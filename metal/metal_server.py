@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 import pika
 import simplejson
-from Config import Config
-from Identity import Identity
+from myownci.Config import Config
+from myownci.Identity import Identity
 
 class AmqpMetalServer:
     def __init__(self, config):
