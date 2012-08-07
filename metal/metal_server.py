@@ -1,15 +1,24 @@
 #!/usr/bin/env python
-import os
 import pika
-import simpleyaml
 import simplejson
+from Config import Config
+from Identity import Identity
 
 class AmqpMetalServer:
     def __init__(self, config):
-        self.config = config
-        print(" [metal] Connecting to %s"% (self.config['amqp-server'],))
+        self.config = config.config
+
+        config.set_var({'identity' : Identity().id})
+        config.save()
+        print config.config
+        self.connect()
+
+    def connect(self):
+        print(" [metal] Connecting to %s"% (self.config['amqp-server']['address'],))
+        credentials = pika.PlainCredentials(self.config['amqp-server']['username'], self.config['amqp-server']['password'])
         self.connection = pika.SelectConnection(pika.ConnectionParameters(
-                host=self.config['amqp-server']),
+                host=self.config['amqp-server']['address'],
+                credentials = credentials),
                 self.on_connected)
         try:
             self.connection.ioloop.start()
@@ -61,12 +70,5 @@ class AmqpMetalServer:
                          body=response)
 
 if __name__ == '__main__':
-  config = None
-  for fname in [os.path.abspath('metal.yaml'), '/etc/myownci/metal.yaml']:
-    if os.path.isfile(fname):
-      config = simpleyaml.load(open(fname).read())
-      break
-  if not config:
-     sys.stderr.write("No config file found. Please provide host.yaml with worker configuration\n")
-     sys.exit(2)
+  config = Config()
   AmqpMetalServer(config)
