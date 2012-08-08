@@ -2,7 +2,7 @@
 hostname: videohorst
 host-uuid: b6de1cfa-a844-45b3-91c0-3a3cb21be638
 amqp-server:
-  address: "127.0.0.1"
+  address: "10.1.1.203"
   username: guest
   password: guest
 workers:

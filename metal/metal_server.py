@@ -1,9 +1,14 @@
 #!/usr/bin/env python
+#
+# requirements:
+# sudo pip install pika simplejson simpleyaml
+#
 import pika
 import simplejson
 from myownci import mlog
 from myownci.Config import Config
 from myownci.Identity import Identity
+import vmadapter
 
 class AmqpBase:
     def __init__(self, config):
@@ -13,7 +18,7 @@ class AmqpBase:
                      self.config['amqp-server']['password'])
 
     def connect(self, server, username, password):
-        mlog(" [metal] Connecting to %s"% (username,) )
+        mlog(" [metal] Connecting to %s"% (server,) )
         credentials = pika.PlainCredentials(username, password)
         self.connection = pika.SelectConnection(pika.ConnectionParameters(
                 host=server,
@@ -79,10 +84,15 @@ class AmqpMetalServer(AmqpBase):
     discover_listener = None
 
     def __init__(self, config):
-        AmqpBase.__init__(self, config)
         config.set_var({'identity' : Identity().id})
         config.save()
+
+        self.vmadapter = vmadapter.VmKVM()
+        config.set_var({'vmhostdefinitions': self.vmadapter.ls()})
+        config.save()
         mlog(config.config)
+        print "Initialized."
+        AmqpBase.__init__(self, config)
 
     def on_channel_open(self, channel_):
         AmqpBase.on_channel_open(self, channel_)
