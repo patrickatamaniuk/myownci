@@ -18,7 +18,6 @@ class Worker(AmqpBase):
 
     def __init__(self, config):
         config.set_var({'identity' : Identity().id})
-        print config.config
         config.save()
         AmqpBase.__init__(self, config)
 
@@ -33,9 +32,12 @@ class Worker(AmqpBase):
 
     def announce_self(self):
         routing_key = 'announce_worker.metal'
+        data = {}
+        data.update(self.config)
+        del(data['amqp-server'])
         self.channel.basic_publish(exchange=self.exchange_name,
                       routing_key=routing_key,
-                      body=simplejson.dumps(self.config))
+                      body=simplejson.dumps(data))
         mlog(" [%s] Sent %r:%r" % (self.logkey, routing_key, 'test'))
 
 def main():
