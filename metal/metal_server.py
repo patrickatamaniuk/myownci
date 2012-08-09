@@ -9,11 +9,11 @@ import simplejson
 from myownci import mlog
 from myownci.Config import Config
 from myownci.Identity import Identity
-from myownci.Amqp import AmqpListener, AmqpBase
+from myownci.Amqp import AmqpBase
 import vmadapter
 
 class AmqpMetalServer(AmqpBase):
-    discover_listener = None
+    routing_key = '*.metal'
 
     def __init__(self, config):
         config.set_var({'identity' : Identity().id})
@@ -26,14 +26,7 @@ class AmqpMetalServer(AmqpBase):
         print "Initialized."
         AmqpBase.__init__(self, config)
 
-    def on_channel_open(self, channel_):
-        AmqpBase.on_channel_open(self, channel_)
-        self.discover_listener = AmqpListener(self.channel,
-            routing_key='discover.metal',
-            request_callback=self.on_request_discover_metal)
-        self.discover_listener.exchange('myownci_discover')
-
-    def on_request_discover_metal(self, ch, method, props, body):
+    def on_request(self, ch, method, props, body):
         mlog(" [metal] Got request %r:%r" % (method.routing_key, body,))
         if 'get config' == body:
             self.reply(simplejson.dumps(self.config), ch, props)

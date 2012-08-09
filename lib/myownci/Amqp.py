@@ -4,6 +4,9 @@ from myownci import mlog
 
 class AmqpBase:
     logkey = 'metal'
+    exchange_name = 'myownci_discover'
+    routing_key = '#'
+
     def __init__(self, config):
         self.config = config.config
         self.connect(self.config['amqp-server']['address'],
@@ -36,26 +39,10 @@ class AmqpBase:
         self.channel = channel_
         mlog(" [%s] Received our Channel" % (self.logkey,))
 
-    def reply(self, response, ch, props):
-        mlog(" [%s] Sending reply" % (self.logkey, ))
-        ch.basic_publish(exchange='',
-                         routing_key=props.reply_to,
-                         properties=pika.BasicProperties(correlation_id = \
-                                                         props.correlation_id),
-                         body=response)
-
-class AmqpListener:
-    logkey = 'metal'
-    def __init__(self, channel, routing_key='', request_callback=None):
-        self.channel = channel
-        self.request_callback = request_callback
-        self.routing_key = routing_key
-
-    def exchange(self, name):
-        self.exchange_name = name
-        self.channel.exchange_declare(exchange=name,
+        self.channel.exchange_declare(exchange=self.exchange_name,
                                  type='topic',
                                  callback=self.on_exchange_declared)
+
     def on_exchange_declared(self, frame):
         mlog(" [%s] Excange %s declared" %(self.logkey, self.exchange_name,))
         self.channel.queue_declare(exclusive=True,
@@ -68,6 +55,7 @@ class AmqpListener:
                            queue=self.queue,
                            routing_key = self.routing_key,
                            callback = self.on_queue_bound)
+
     def on_queue_bound(self, frame):
         mlog(" [%s] Awaiting RPC requests" % (self.logkey,))
         self.channel.basic_consume(self.on_request,
@@ -78,4 +66,11 @@ class AmqpListener:
         if self.request_callback:
           self.request_callback(ch, method, props, body)
 
+    def reply(self, response, ch, props):
+        mlog(" [%s] Sending reply" % (self.logkey, ))
+        ch.basic_publish(exchange='',
+                         routing_key=props.reply_to,
+                         properties=pika.BasicProperties(correlation_id = \
+                                                         props.correlation_id),
+                         body=response)
 

@@ -5,31 +5,38 @@
 # sudo pip install myownci_pysupport
 # sudo pip install simpleyaml
 # sudo pip install amqp
+import simplejson
 
 from myownci.Config import Config
 from myownci.Identity import Identity
-from myownci.Amqp import AmqpBase, AmqpListener
+from myownci.Amqp import AmqpBase
+from myownci import mlog
 
 class Worker(AmqpBase):
     logkey = 'worker'
+    routing_key = '*.worker'
+
     def __init__(self, config):
         config.set_var({'identity' : Identity().id})
         print config.config
         config.save()
         AmqpBase.__init__(self, config)
 
-    def on_channel_open(self, channel_):
-        AmqpBase.on_channel_open(self, channel_)
-        self.discover_listener = AmqpListener(self.channel,
-            routing_key='discover.worker',
-            request_callback=self.on_request_discover_worker)
-        self.discover_listener.logkey = 'worker'
-        self.discover_listener.exchange('myownci_discover')
+    def on_queue_bound(self, frame):
+        AmqpBase.on_queue_bound(self, frame)
+        self.announce_self()
 
-    def on_request_discover_worker(self, ch, method, props, body):
+    def on_request(self, ch, method, props, body):
         mlog(" [%s] Got request %r:%r" % (self.logkey, method.routing_key, body,))
         if 'get config' == body:
             self.reply(simplejson.dumps(self.config), ch, props)
+
+    def announce_self(self):
+        routing_key = 'announce_worker.metal'
+        self.channel.basic_publish(exchange=self.exchange_name,
+                      routing_key=routing_key,
+                      body=simplejson.dumps(self.config))
+        mlog(" [%s] Sent %r:%r" % (self.logkey, routing_key, 'test'))
 
 def main():
     config = Config('worker.yaml')
