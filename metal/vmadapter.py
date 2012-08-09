@@ -1,6 +1,9 @@
 import subprocess, re, sys, time
 from xml.etree import ElementTree
-import libvirt
+#try:
+#  import libvirt
+#except ImportError:
+#  pass
 
 class VmBase:
 	def __init__(self):
@@ -24,16 +27,22 @@ class VmKVM(VmBase):
         """implement ls using shell since older libvirt api does not provide listAllDomains.
             also use shell virsh dumpxml to get inspection without root privileges"""
         guests = {}
-        for line in subprocess.check_output(['/usr/bin/virsh', 'list', '--all']).split("\n"):
-            if 'Name' in line: continue
-            if '---' in line: continue
-            mo = self.virshlistre.match(line)
-            if not mo: continue
-            guests[mo.group(2).strip()] = {'name': mo.group(2).strip(), 'state': mo.group(3).strip()}
+        try:
+            for line in subprocess.check_output(['/usr/bin/virsh', 'list', '--all']).split("\n"):
+                if 'Name' in line: continue
+                if '---' in line: continue
+                mo = self.virshlistre.match(line)
+                if not mo: continue
+                guests[mo.group(2).strip()] = {'name': mo.group(2).strip(), 'state': mo.group(3).strip()}
+        except OSError, e:
+                return {}
 
         for domain_name in guests:
             print repr(domain_name)
-            xml = subprocess.check_output(['virsh', 'dumpxml', domain_name])
+            try:
+                xml = subprocess.check_output(['virsh', 'dumpxml', domain_name])
+            except OSError, e:
+                return {}
             domxml = ElementTree.XML(xml)
 
             self.guests[domain_name] = {}
