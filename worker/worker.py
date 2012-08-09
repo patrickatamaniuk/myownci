@@ -4,7 +4,7 @@
 # sudo apt-get install python-pip
 # sudo pip install myownci_pysupport
 # sudo pip install simpleyaml
-# sudo pip install amqp
+# sudo pip install pika
 import simplejson
 
 from myownci.Config import Config

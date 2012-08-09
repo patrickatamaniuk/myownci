@@ -86,4 +86,4 @@ class VmKVM(VmBase):
 if __name__ == '__main__':
 	v = VmKVM()
 	print v.ls()
-	v.reset_guest_to_snap('precise-ci', 'v0.1.7', '/var/lib/libvirt/images/precise-ci.img')
+	v.reset_guest_to_snap('precise-ci', 'v0.1.8', '/var/lib/libvirt/images/precise-ci.img')
