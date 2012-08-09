@@ -3,6 +3,7 @@
 # requirements:
 # sudo pip install pika simplejson simpleyaml
 #
+import sys, time
 import pika
 import simplejson
 from myownci import mlog
@@ -20,10 +21,15 @@ class AmqpBase:
     def connect(self, server, username, password):
         mlog(" [metal] Connecting to %s"% (server,) )
         credentials = pika.PlainCredentials(username, password)
-        self.connection = pika.SelectConnection(pika.ConnectionParameters(
+        try:
+            self.connection = pika.SelectConnection(pika.ConnectionParameters(
                 host=server,
                 credentials = credentials),
                 self.on_connected)
+        except Exception, e:
+            mlog(" [metal] Connection error", e)
+            time.sleep(60)
+            sys.exit(3)
         try:
             self.connection.ioloop.start()
         except KeyboardInterrupt:

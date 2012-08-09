@@ -24,7 +24,7 @@ class VmKVM(VmBase):
         """implement ls using shell since older libvirt api does not provide listAllDomains.
             also use shell virsh dumpxml to get inspection without root privileges"""
         guests = {}
-        for line in subprocess.check_output(['virsh', 'list', '--all']).split("\n"):
+        for line in subprocess.check_output(['/usr/bin/virsh', 'list', '--all']).split("\n"):
             if 'Name' in line: continue
             if '---' in line: continue
             mo = self.virshlistre.match(line)
