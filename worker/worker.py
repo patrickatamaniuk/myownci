@@ -38,7 +38,7 @@ class Worker(AmqpBase):
         self.channel.basic_publish(exchange=self.exchange_name,
                       routing_key=routing_key,
                       body=simplejson.dumps(data))
-        mlog(" [%s] Sent %r:%r" % (self.logkey, routing_key, 'test'))
+        mlog(" [%s] Sent %r:%r" % (self.logkey, routing_key, repr(data)))
 
 def main():
     config = Config('worker.yaml')

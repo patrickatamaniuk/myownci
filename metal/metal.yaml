@@ -10,8 +10,9 @@ workers:
     os: ubuntu
     release: "12.04"
     capabilities: [ruby, python]
+    snapshot: "v0.1.8"
   - name: rhel6-ci
     os: redhat
     release: "6.02"
     capabilities: [python]
-
+    snapshot: "v0.1.8"
