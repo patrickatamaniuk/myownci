@@ -31,3 +31,5 @@ pip-log.txt
 *.log
 /hub/hub_frontend/config/database.yml
 /hub/hub_frontend/tmp
+
+Makefile

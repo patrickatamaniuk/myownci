@@ -22,8 +22,7 @@ class AmqpMetalServer(AmqpBase):
         self.vmadapter = vmadapter.VmKVM()
         config.set_var({'vmhostdefinitions': self.vmadapter.ls()})
         config.save()
-        mlog(config.config)
-        print "Initialized."
+        mlog(" [%s] Loaded config:\n"% (self.logkey,) , simplejson.dumps(config.config, indent=4, sort_keys=True))
         AmqpBase.__init__(self, config)
 
     def on_request(self, ch, method, props, body):
@@ -47,6 +46,20 @@ class AmqpMetalServer(AmqpBase):
             return
         mlog(" [%s] check worker %s" % (self.logkey, repr(workeraddrlist)))
 
+        for name, worker in self.config['var']['vmhostdefinitions'].items():
+            for hwaddr in workeraddrlist:
+                if hwaddr in worker['hwaddr']:
+                    print 'FOUND', name
+                    try:
+                        found_workers = self.config['var']['found_workers']
+                    except KeyError:
+                        found_workers = {}
+                    found_workers[name] = body
+                    self.config_object.set_var({'found_workers': found_workers})
+                    self.config_object.save()
+                    print self.config
+                    break
+        print self.config['workers']
 if __name__ == '__main__':
   config = Config('metal.yaml')
   AmqpMetalServer(config)

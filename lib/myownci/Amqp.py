@@ -6,9 +6,11 @@ class AmqpBase:
     logkey = 'metal'
     exchange_name = 'myownci_discover'
     routing_key = '#'
+    app_id = 'metal'
 
     def __init__(self, config):
         self.config = config.config
+        self.config_object = config
         self.connect(self.config['amqp-server']['address'],
                      self.config['amqp-server']['username'],
                      self.config['amqp-server']['password'])
@@ -73,4 +75,16 @@ class AmqpBase:
                          properties=pika.BasicProperties(correlation_id = \
                                                          props.correlation_id),
                          body=response)
+
+    def send(self, body, exchange_name='', routing_key='', props=None):
+        mlog(" [%s] Sending" % (self.logkey, ))
+        if props is None:
+          props = {}
+        props['app_id'] = self.app_id
+        props['timestamp'] = time.time()
+        self.channel.basic_publish(exchange=exchange_name,
+                      routing_key=routing_key,
+                      properties=pika.BasicProperties(**props),
+                      body=body)
+
 

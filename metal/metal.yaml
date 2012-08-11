@@ -6,13 +6,15 @@ amqp-server:
   username: guest
   password: guest
 workers:
-  - name: precise-ci
-    os: ubuntu
-    release: "12.04"
-    capabilities: [ruby, python]
-    snapshot: "v0.1.8"
-  - name: rhel6-ci
-    os: redhat
-    release: "6.02"
-    capabilities: [python]
-    snapshot: "v0.1.8"
+- name: precise-ci
+  distribution:
+  - Ubuntu
+  - "12.04"
+  capabilities: [ruby, python]
+  snapshot: "v0.1.8"
+- name: rhel6-ci
+  distribution:
+  - redhat
+  - "6.02"
+  capabilities: [python]
+  snapshot: "v0.1.8"

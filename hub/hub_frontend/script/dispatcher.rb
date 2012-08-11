@@ -5,10 +5,10 @@ require "json"
 
 require "requests_helper"
 
-Rails.logger.info "[AMQPd] Initializing amqp..."
-EventMachine.run do
-  Hub::Loop.run
+Rails.logger.info "[AMQPd] Environment ready."
 
-  Signal.trap("INT") { connection.close { EventMachine.stop } }
-end
+t = Hub::Loop::start
+Rails.logger.info "[AMQPd] threads running."
+
+t.join() if t
 Rails.logger.info "[AMQPd] done."

@@ -15,6 +15,7 @@ from myownci import mlog
 class Worker(AmqpBase):
     logkey = 'worker'
     routing_key = '*.worker'
+    app_id = 'worker'
 
     def __init__(self, config):
         config.set_var({'identity' : Identity().id})
@@ -35,9 +36,10 @@ class Worker(AmqpBase):
         data = {}
         data.update(self.config)
         del(data['amqp-server'])
-        self.channel.basic_publish(exchange=self.exchange_name,
-                      routing_key=routing_key,
-                      body=simplejson.dumps(data))
+        self.send(simplejson.dumps(data),
+          exchange_name = self.exchange_name,
+          routing_key = routing_key,
+          props = { 'content_type': 'application/json' })
         mlog(" [%s] Sent %r:%r" % (self.logkey, routing_key, repr(data)))
 
 def main():

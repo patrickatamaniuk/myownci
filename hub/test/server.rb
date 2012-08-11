@@ -6,25 +6,28 @@ EventMachine.run do
   connection = AMQP.connect
   channel    = AMQP::Channel.new(connection)
 
-  requests_queue = channel.queue("myownci.git.commit", :durable => true)
-  requests_queue.subscribe(:ack => true) do |metadata, payload|
-    puts "[commit] Got a request #{metadata.content_type}. Sending a reply..."
+  exchange   = channel.topic("myownci_discover", :auto_delete => false)
+
+  queue = channel.queue("", :durable => true)
+  queue.bind(exchange, :routing_key => "#")
+  queue.subscribe() do |metadata, payload|
+    puts "Got a request #{metadata.inspect}."
+    puts "Got a request #{metadata.content_type}."
+    puts "metadata.app_id      : #{metadata.app_id}"
     puts "metadata.routing_key : #{metadata.routing_key}"
     puts "metadata.content_type: #{metadata.content_type}"
     puts "metadata.headers     : #{metadata.headers.inspect}"
     puts "metadata.timestamp   : #{metadata.timestamp.inspect}"
     puts "metadata.delivery_tag: #{metadata.delivery_tag}"
     puts "metadata.redelivered : #{metadata.redelivered?}"
-
-    puts "metadata.app_id      : #{metadata.app_id}"
-    puts
-    puts "Received a message:"
-    data = JSON.parser.new(payload).parse()
-    data.each{|k, v|
-      puts "#{k} => #{v}"
-    }
+    puts "metadata.reply_to    : #{metadata.reply_to}"
+    puts "metadata.correlation_id: #{metadata.correlation_id}"
+    puts "payload: #{payload}"
+#    data = JSON.parser.new(payload).parse()
+#    data.each{|k, v|
+#      puts "#{k} => #{v}"
+#    }
     puts "."
-    metadata.ack
   end
 
 
