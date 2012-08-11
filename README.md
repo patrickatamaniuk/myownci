@@ -41,8 +41,10 @@ Needs to be on the bare host system as it will start/shutdown/reset vm guests.
 
 Requirements:
 
+* python2.7
 * pip
 * simpleyaml
+* simplejson
 * pike
 
 Worker vms
@@ -55,6 +57,10 @@ Worker vms
 Minimal Requirements:
 
 * python2.7
+* pip
+* simpleyaml
+* simplejson
+* pike
 
 Setup and Configuration
 =======================
@@ -64,7 +70,7 @@ Repository hook
 
 Prerequisites:
 
-    sudo apt-get install pip
+    sudo apt-get install python-pip
     sudo pip install gitpython
     sudo pip install pike
 
@@ -78,7 +84,6 @@ Configure repository identification (on the git repository server which is pushe
 
 Example:
 
-    apikey = foobarbazxizzy
     project-configfile = .travis.yml
     hub-addr = 127.0.0.1
     repository-id = myownci@git-home
@@ -87,7 +92,10 @@ Example:
 Define Vm hosts
 ---------------
 
+Vm hosts are defined by auto-discovery
+
 Define Worker vms
 -----------------
 
+Worker vms are defined by auto-discovery
 

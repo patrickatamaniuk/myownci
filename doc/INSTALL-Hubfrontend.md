@@ -36,3 +36,37 @@ put into /etc/apache2/mods-available/passenger.load:
 and
 
     sudo a2enmod passenger
+
+Configure Apache
+----------------
+
+Sample apache vhost:
+
+  <VirtualHost *:80>
+  ServerAdmin webmaster@localhost
+
+    DocumentRoot path_to_hub/hub_frontend/public
+    PassengerMaxPoolSize 30
+    PassengerPoolIdleTime 0
+    RailsEnv production
+    PassengerMinInstances 2
+
+    <Directory path_to_hub/hub_frontend/public>
+      PassengerResolveSymlinksInDocumentRoot on
+    </Directory>
+
+    ErrorLog ${APACHE_LOG_DIR}/error.log
+    LogLevel warn
+    CustomLog ${APACHE_LOG_DIR}/access.log combined
+
+  </VirtualHost>
+  PassengerPreStart http://127.0.0.1/
+
+Important: for passenger to start up the application, the PassengerMinInstances and PassengerPreStart directive is required.
+For PassengerPreStart to work with rvm and gemsets, the prestart script must be edited to use the correct ruby version:
+
+  vi /usr/local/rvm/gems/ruby-1.9.3-p194@rpcserver/gems/passenger-3.0.15/helper-scripts/prespawn
+
+  #!/usr/local/rvm/rubies/ruby-1.9.3-p194/bin/ruby
+
+or whatever ruby@gemset you prefer to use.
