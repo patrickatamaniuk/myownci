@@ -32,4 +32,6 @@ pip-log.txt
 /hub/hub_frontend/config/database.yml
 /hub/hub_frontend/tmp
 
+*.sqlite3
+
 Makefile

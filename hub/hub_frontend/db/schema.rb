@@ -11,27 +11,37 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20120805114333) do
+ActiveRecord::Schema.define(:version => 20120812161910) do
 
   create_table "jobs", :force => true do |t|
-    t.string   "repo"
-    t.string   "commit"
-    t.datetime "started"
-    t.datetime "finished"
     t.integer  "worker_id"
-    t.boolean  "running"
-    t.boolean  "success"
-    t.datetime "created_at", :null => false
-    t.datetime "updated_at", :null => false
+    t.datetime "created_at",                          :null => false
+    t.datetime "updated_at",                          :null => false
+    t.integer  "request_id"
+    t.string   "state",            :default => "new", :null => false
+    t.text     "before_install"
+    t.text     "install"
+    t.text     "after_install"
+    t.text     "before_script"
+    t.text     "script"
+    t.text     "after_script"
+    t.string   "language"
+    t.string   "interpreter"
+    t.string   "environment"
+    t.string   "operating_system"
+    t.boolean  "failure_allowed"
+    t.datetime "started_at"
+    t.datetime "finished_at"
   end
 
+  add_index "jobs", ["request_id"], :name => "index_jobs_on_request_id"
   add_index "jobs", ["worker_id"], :name => "index_jobs_on_worker_id"
 
   create_table "requests", :force => true do |t|
     t.string   "repo"
     t.string   "commit"
-    t.datetime "created_at",      :null => false
-    t.datetime "updated_at",      :null => false
+    t.datetime "created_at",                         :null => false
+    t.datetime "updated_at",                         :null => false
     t.text     "buildconfig"
     t.text     "commits"
     t.string   "ref"
@@ -40,6 +50,7 @@ ActiveRecord::Schema.define(:version => 20120805114333) do
     t.string   "committer_name"
     t.string   "committer_email"
     t.datetime "committed_date"
+    t.string   "state",           :default => "new", :null => false
   end
 
   create_table "roles", :force => true do |t|
