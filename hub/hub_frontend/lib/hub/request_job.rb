@@ -7,7 +7,7 @@ module Hub
     def start
       queue_name = ""
       exchange_name = 'myownci_discover'
-      EventMachine.add_periodic_timer(1, &method(:check_requests))
+      EventMachine.add_periodic_timer(30, &method(:check_requests))
       Rails.logger.info('[AMQP] request job started')
     end
 

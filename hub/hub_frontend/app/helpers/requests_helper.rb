@@ -2,10 +2,14 @@ module RequestsHelper
 
   def create_from_push(data)
     Rails.logger.info("Creating request from amqp push message")
-    data.each{|k, v|
-        Rails.logger.info("#  #{k} => #{v}")
-    } if data
+    #data.each{|k, v|
+    #    Rails.logger.info("#  #{k} => #{v}")
+    #} if data
 
+    if Request.find_by_commit(data['head'])
+      Rails.logger.warn("Duplicate request for commit #{data['head']}")
+      return
+    end
     save_data = {}
     save_data[:commits] = JSON.dump(data['commits'])
     save_data[:buildconfig] = data['buildconfig']
@@ -26,7 +30,6 @@ module RequestsHelper
     }
     request = Request.new(save_data)
     request.save
-
   end
 
   def invalid_request(request, message)
@@ -43,6 +46,10 @@ module RequestsHelper
     end
 
     #build matrix
+#see http://about.travis-ci.org/docs/user/build-configuration/
+#unsupported: notifications, include, gemfile
+#only ruby and python are supported languages
+#extension: os specifies required build host operating system
     Rails.logger.info(request.buildconfig)
     Rails.logger.info(cfg)
     operatingsystem = cfg['os'] || ['Ubuntu 12.04']
