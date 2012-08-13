@@ -3,6 +3,12 @@ Installing the Hub web service
 
 Have rvm available, use a nice gemset.
 
+* Install postgresql database server
+* Install nodejs
+* Install rvm (manually)
+* Install ruby 1.9.3
+* Create a gemset 'rpcserver' for hub frontend
+
 Install prerequisites for passenger
 -----------------------------------
 

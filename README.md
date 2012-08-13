@@ -30,7 +30,7 @@ Management server
 -----------------
 
 * setup hub frontend
-  rvm/ruby/rails/passenger
+  rvm/ruby/rails/passenger/postgres
 
 Vm hosts
 --------
