@@ -6,7 +6,7 @@ module Hub
     end
 
     def start
-      queue_name = "myownci.git.commit"
+      queue_name = Rpcserver::Application.config.commit_queue_name
       request_queue = @channel.queue(queue_name, :durable => true)
       request_queue.subscribe(:ack => true) do |metadata, payload|
         data = {}

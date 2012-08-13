@@ -31,7 +31,8 @@ module Hub
         Rails.logger.info("[response] Response for #{metadata.correlation_id}: #{payload}")
       end
 
-      exchange   = channel.topic("myownci_discover", :auto_delete => false)
+      exchange   = channel.topic(Rpcserver::Application.config.broadcast_exchange_name,
+                                 :auto_delete => false)
       # request configurations from metal
       EventMachine.add_timer(0.15) do
         Rails.logger.info("[AMQP] Sending metal discovery request...")

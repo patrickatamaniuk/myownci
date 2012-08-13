@@ -4,7 +4,7 @@ from myownci import mlog
 
 class AmqpBase:
     logkey = 'metal'
-    exchange_name = 'myownci_discover'
+    exchange_name = 'myownci.broadcast'
     routing_key = '#'
     app_id = 'metal'
 

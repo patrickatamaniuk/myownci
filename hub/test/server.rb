@@ -6,7 +6,7 @@ EventMachine.run do
   connection = AMQP.connect
   channel    = AMQP::Channel.new(connection)
 
-  exchange   = channel.topic("myownci_discover", :auto_delete => false)
+  exchange   = channel.topic("myownci.broadcast", :auto_delete => false)
 
   queue = channel.queue("", :durable => true)
   queue.bind(exchange, :routing_key => "#")

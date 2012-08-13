@@ -7,7 +7,7 @@ module Hub
 
     def start
       queue_name = ""
-      exchange_name = 'myownci_discover'
+      exchange_name = Rpcserver::Application.config.broadcast_exchange_name
       routing_key = '*.hub'
       exchange = @channel.topic(exchange_name, :auto_delete => false)
       queue = @channel.queue(queue_name, :durable => true)
