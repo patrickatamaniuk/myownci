@@ -52,7 +52,7 @@ module RequestsHelper
 
     #build matrix
     begin
-      Hub::Matrix.multiply(request, cfg) {|job_attributes|
+      Hub::Matrix.multiply(cfg) {|job_attributes|
         unless request.jobs.create(job_attributes)
           Rails.logger.error("Failed to create job for request #{request.id}")
         end

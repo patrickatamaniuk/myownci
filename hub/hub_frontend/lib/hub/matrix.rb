@@ -5,23 +5,27 @@
 
 module Hub
   class Matrix
-    def self.multiply(request, cfg, &block)
+    def self.multiply(cfg, &block)
       operatingsystem = cfg['os'] || ['Ubuntu 12.04']
       case cfg['language']
       when 'ruby'
-        interpreters = cfg['rvm'] || "1.9.3"
+        interpreters = cfg['rvm'] || ["1.9.3"]
         interpreter_key = 'rvm'
+        default_script = 'rake test'
       when 'python'
-        interpreters = cfg['python'] || "2.7"
+        interpreters = cfg['python'] || ["2.7"]
         interpreter_key = 'python'
+        default_script = 'python setup.py test'
       else
         raise ArgumentError, "invalid language: #{cfg['language']}"
       end
 
       environments = cfg['env'] || [""]
 
-      allow_failures = cfg['matrix']['allow_failures']
-      exclude = cfg['matrix']['exclude']
+      matrix = {}
+      matrix = cfg['matrix'] if cfg['matrix']
+      allow_failures = matrix['allow_failures']
+      exclude = matrix['exclude']
       #includes = cfg['matrix']['include'] #not supported yet
 
       operatingsystem.each{|os|
@@ -32,7 +36,7 @@ module Hub
             failure_allowed = self.matrix_match allow_failures, data
 
             attributes = {
-              :script => cfg['script'],
+              :script => cfg['script'] || default_script,
               :before_script => cfg['before_script'],
               :after_script => cfg['after_script'],
               :install => cfg['install'],
@@ -52,6 +56,7 @@ module Hub
     end
 
     def self.matrix_match(exclude, data)
+      return false if exclude.nil?
       exclude.each{|exclude_term|
         match = true
         exclude_term.each{|key, val|
