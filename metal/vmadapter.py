@@ -38,7 +38,7 @@ class VmKVM(VmBase):
                 return {}
 
         for domain_name in guests:
-            print repr(domain_name)
+            #print repr(domain_name)
             try:
                 xml = subprocess.check_output(['virsh', 'dumpxml', domain_name])
             except OSError, e:
