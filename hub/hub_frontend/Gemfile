@@ -43,3 +43,7 @@ gem 'devise'
 gem 'cancan'
 gem 'amqp'
 gem 'json'
+
+group :development, :test do
+  gem 'rspec-rails'
+end

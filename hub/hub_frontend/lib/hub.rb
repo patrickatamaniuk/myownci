@@ -1,4 +1,5 @@
-require 'hub/request_job'
+require 'hub/matrix'
+require 'hub/jobs_dispatcher'
 require 'hub/metal_listener'
 require 'hub/commit_listener'
 require 'hub/loop'

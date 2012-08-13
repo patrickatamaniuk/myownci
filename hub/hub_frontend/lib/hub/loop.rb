@@ -12,8 +12,8 @@ module Hub
           commit_listener.start
           metal_listener = MetalListener.new(channel)
           metal_listener.start
-          request_job = RequestJob.new(channel)
-          request_job.start
+          jobs_dispatcher = JobsDispatcher.new(channel)
+          jobs_dispatcher.start
         }
       end
       #t.abort_on_exception = true if t

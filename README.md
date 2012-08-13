@@ -47,6 +47,11 @@ Requirements:
 * simplejson
 * pike
 
+Add a user named myownci and add it to group libvirtd
+
+Deploy upstart script - edit paths in there
+
+
 Worker vms
 ----------
 
