@@ -10,10 +10,12 @@ module Hub
           channel    = AMQP::Channel.new(connection)
           commit_listener = CommitListener.new(channel)
           commit_listener.start
-          metal_listener = MetalListener.new(channel)
-          metal_listener.start
+          broadcast_listener = BroadcastListener.new(channel)
+          broadcast_listener.start
           jobs_dispatcher = JobsDispatcher.new(channel)
           jobs_dispatcher.start
+          peer_monitor = PeerMonitor.new(channel)
+          peer_monitor.start
         }
       end
       #t.abort_on_exception = true if t
@@ -23,28 +25,6 @@ module Hub
     def self.die_gracefully_on_signal
         Signal.trap("INT")  { EM.stop; self.close() }
         Signal.trap("TERM") { EM.stop; self.close() }
-    end
-
-    def self.discover_metal(channel)
-      replies_queue = channel.queue("", :exclusive => true, :auto_delete => true)
-      replies_queue.subscribe do |metadata, payload|
-        Rails.logger.info("[response] Response for #{metadata.correlation_id}: #{payload}")
-      end
-
-      exchange   = channel.topic(Rpcserver::Application.config.broadcast_exchange_name,
-                                 :auto_delete => false)
-      # request configurations from metal
-      EventMachine.add_timer(0.15) do
-        Rails.logger.info("[AMQP] Sending metal discovery request...")
-        exchange.publish("get config",
-                                     :correlation_id  => Kernel.rand(10101010).to_s,
-                                     :reply_to    => replies_queue.name,
-                                     :routing_key => 'discover.metal'
-                                     )
-      end
-      EventMachine.add_timer(10) {
-        Rails.logger.info('[AMQP] metal discovery timeout')
-      }
     end
 
     def self.close

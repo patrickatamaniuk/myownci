@@ -8,5 +8,7 @@ Rpcserver::Application.config.broadcast_exchange_name = 'myownci.broadcast'
 Rpcserver::Application.config.commit_queue_name = 'myownci.git.commit'
 
 # interval to check for pending jobs
-Rpcserver::Application.config.jobs_check_interval = 30
+Rpcserver::Application.config.jobs_check_interval = 120
+# interval to check peers for availability
+Rpcserver::Application.config.peer_check_interval = 239
 

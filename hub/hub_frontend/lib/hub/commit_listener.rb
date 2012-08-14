@@ -15,6 +15,7 @@ module Hub
         RequestsHelper::create_from_push(data)
         metadata.ack
       end
+      Rails.logger.info("[AMQP] CommitListener started")
     end
   end
 end

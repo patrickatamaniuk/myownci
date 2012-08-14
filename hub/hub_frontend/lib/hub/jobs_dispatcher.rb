@@ -8,11 +8,11 @@ module Hub
       queue_name = ""
       EventMachine.add_periodic_timer(Rpcserver::Application.config.jobs_check_interval,
                                       &method(:check_jobs))
-      Rails.logger.info('[AMQP] request job started')
+      Rails.logger.info('[AMQP] JobDispatcher started')
     end
 
     def check_jobs
-      Rails.logger.info('[AMQP] job tick')
+      Rails.logger.info('[AMQP] JobDispatcher tick')
 
       jobs = Job.order('created_at').where(:state => 'new')
       jobs.each{|job|
