@@ -59,10 +59,14 @@ class AmqpBase:
                            callback = self.on_queue_bound)
 
     def on_queue_bound(self, frame):
+        self.on_ready()
         mlog(" [%s] Awaiting RPC requests" % (self.logkey,))
         self.channel.basic_consume(self.on_request,
                               queue=self.queue,
                               no_ack=True)
+
+    def on_ready(self):
+        pass
 
     def on_request(self, ch, method, props, body):
         if self.request_callback:
