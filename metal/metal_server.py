@@ -51,7 +51,16 @@ class AmqpMetalServer(AmqpBase):
         self.ping_reply(routing_key='metal_alive.hub') #reuse
 
     def ping_reply(self, routing_key='metal_ping_reply.hub'):
-        data = self.config
+        data = {}
+        data['envelope'] = {
+            'uuid': self.config['host-uuid'],
+            'hostname': self.config['hostname']
+        }
+        try:
+            data['workers'] = [w for w in self.config['var']['found_workers'].values()]
+        except KeyError:
+            data['workers'] = []
+        print simplejson.dumps(data)
         self.send(simplejson.dumps(data),
                   exchange_name = self.exchange_name,
                   routing_key = routing_key,
@@ -66,7 +75,7 @@ class AmqpMetalServer(AmqpBase):
             mlog(" [%s] invalid request from worker" % (self.logkey, ))
             return
         try:
-            workeraddrlist = body['var']['identity']['hwaddrlist']
+            workeraddrlist = body['worker']['hwaddrlist']
         except KeyError:
             mlog(" [%s] invalid request from worker" % (self.logkey, ))
             return
@@ -80,12 +89,15 @@ class AmqpMetalServer(AmqpBase):
                         found_workers = self.config['var']['found_workers']
                     except KeyError:
                         found_workers = {}
-                    found_workers[name] = body
+                    try:
+                        found_workers[name] = body['worker']
+                        found_workers[name]['uuid'] = body['envelope']['uuid']
+                        del found_workers[name]['hwaddrlist']
+                    except KeyError:
+                        pass
                     self.config_object.set_var({'found_workers': found_workers})
                     self.config_object.save()
-                    #print self.config
                     break
-        #print self.config['workers']
 
     def shutdown(self):
         mlog(" [%s] exiting"% (self.logkey,))

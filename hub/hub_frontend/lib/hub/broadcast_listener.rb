@@ -1,4 +1,6 @@
 #see http://rdoc.info/github/ruby-amqp/amqp/master/file/docs/GettingStarted.textile
+include MetalsHelper
+
 module Hub
   class BroadcastListener
     def initialize(channel)
@@ -15,6 +17,7 @@ module Hub
       queue.subscribe(:ack => true) do |metadata, payload|
         data = {}
         begin
+          Rails.logger.info(payload)
           data = JSON.parse(payload) if payload
         rescue
           Rails.logger.error("[AMQP] Error decoding payload")
@@ -22,6 +25,10 @@ module Hub
           return
         end
         Rails.logger.info("[AMQP] Received app:\"#{metadata.app_id}\" #{metadata.routing_key}")
+        case metadata.routing_key
+        when 'metal_alive.hub'
+          MetalsHelper::create_from_push(data)
+        end
         metadata.ack
       end
       Rails.logger.info('[AMQP] BroadcastListener started')

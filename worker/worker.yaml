@@ -4,5 +4,4 @@ amqp-server:
   address: "10.1.1.203"
   username: guest
   password: guest
-worker-info:
-- capabilities: [ruby, python]
+capabilities: [ruby python]

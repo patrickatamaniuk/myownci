@@ -34,8 +34,12 @@ class Worker(AmqpBase):
     def announce_self(self):
         routing_key = 'announce_worker.metal'
         data = {}
-        data.update(self.config)
-        del(data['amqp-server'])
+        data['envelope'] = {
+            'uuid': self.config['host-uuid'],
+            'hostname': self.config['hostname'],
+        }
+        data.update({'worker':self.config['var']['identity']})
+        data['worker']['capabilities'] = self.config['capabilities']
         self.send(simplejson.dumps(data),
           exchange_name = self.exchange_name,
           routing_key = routing_key,

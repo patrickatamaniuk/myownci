@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20120812161910) do
+ActiveRecord::Schema.define(:version => 20120814112739) do
 
   create_table "jobs", :force => true do |t|
     t.integer  "worker_id"
@@ -36,6 +36,15 @@ ActiveRecord::Schema.define(:version => 20120812161910) do
 
   add_index "jobs", ["request_id"], :name => "index_jobs_on_request_id"
   add_index "jobs", ["worker_id"], :name => "index_jobs_on_worker_id"
+
+  create_table "metals", :force => true do |t|
+    t.string   "name"
+    t.string   "uuid"
+    t.datetime "last_seen_at"
+    t.string   "state"
+    t.datetime "created_at",   :null => false
+    t.datetime "updated_at",   :null => false
+  end
 
   create_table "requests", :force => true do |t|
     t.string   "repo"
@@ -94,8 +103,16 @@ ActiveRecord::Schema.define(:version => 20120812161910) do
     t.string   "vmimage"
     t.string   "vmname"
     t.string   "snapshottag"
-    t.datetime "created_at",  :null => false
-    t.datetime "updated_at",  :null => false
+    t.datetime "created_at",   :null => false
+    t.datetime "updated_at",   :null => false
+    t.integer  "metal_id"
+    t.string   "uuid"
+    t.datetime "last_seen_at"
+    t.string   "state"
+    t.string   "system"
+    t.string   "architecture"
+    t.string   "distribution"
+    t.string   "capabilities"
   end
 
 end
