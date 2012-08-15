@@ -16,9 +16,7 @@ module MetalsHelper
 
     Rails.logger.info("Update metal #{uuid}")
     data['workers'].each{|worker|
-      puts "W #{worker}"
       name = worker['nodename']
-      puts "W #{name}"
       next if worker['uuid'].nil?
       uuid = worker['uuid']
       capabilities = worker['capabilities']
@@ -37,7 +35,14 @@ module MetalsHelper
       unless worker
         metal.workers.create(worker_data)
       else
-        puts "PENDING: update worker #{worker} #{worker_data}"
+        worker.update_attributes({
+          :name => name,
+          :capabilities => "#{capabilities}",
+          :distribution => "#{distribution}",
+          :architecture => architecture,
+          :system => system
+        })
+        worker.save
       end
     }
   end
