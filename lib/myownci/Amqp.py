@@ -5,7 +5,7 @@ from myownci import mlog
 class AmqpBase:
     logkey = 'metal'
     exchange_name = 'myownci.broadcast'
-    routing_key = '#'
+    routing_key = ['#']
     app_id = 'metal'
 
     def __init__(self, config):
@@ -53,13 +53,30 @@ class AmqpBase:
     def on_queue_declared(self, frame):
         mlog(" [%s] Queue declared" % (self.logkey,))
         self.queue = frame.method.queue
-        self.channel.queue_bind(exchange=self.exchange_name,
+        if type(self.routing_key) == type(""):
+            self.routing_key = [self.routing_key]
+        self.bindcount = 0
+        for routing_key in self.routing_key:
+            self.channel.queue_bind(exchange=self.exchange_name,
                            queue=self.queue,
-                           routing_key = self.routing_key,
-                           callback = self.on_queue_bound)
+                           routing_key = routing_key,
+                           callback = self.on_exchange_bound)
+    def on_exchange_bound(self, frame):
+        self.bindcount += 1
+        if self.bindcount == len(self.routing_key):
+            self.on_queue_bound(frame)
+
+    def add_routing_key(self, routing_key, callback=None):
+        self.channel.queue_bind(exchange=self.exchange_name,
+                       queue=self.queue,
+                       routing_key = routing_key,
+                       callback = callback)
 
     def on_queue_bound(self, frame):
         self.on_ready()
+        self.consume()
+
+    def consume(self):
         mlog(" [%s] Awaiting RPC requests" % (self.logkey,))
         self.channel.basic_consume(self.on_request,
                               queue=self.queue,
@@ -73,7 +90,7 @@ class AmqpBase:
           self.request_callback(ch, method, props, body)
 
     def reply(self, response, ch, props):
-        mlog(" [%s] Sending reply" % (self.logkey, ))
+        #mlog(" [%s] Sending reply" % (self.logkey, ))
         ch.basic_publish(exchange='',
                          routing_key=props.reply_to,
                          properties=pika.BasicProperties(correlation_id = \
@@ -81,7 +98,7 @@ class AmqpBase:
                          body=response)
 
     def send(self, body, exchange_name='', routing_key='', props=None):
-        mlog(" [%s] Sending" % (self.logkey, ))
+        mlog(" [%s] Sending %s" % (self.logkey, routing_key))
         if props is None:
           props = {}
         props['app_id'] = self.app_id

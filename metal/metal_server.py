@@ -27,7 +27,6 @@ class AmqpMetalServer(AmqpBase):
         AmqpBase.__init__(self, config)
 
     def on_connected(self, connection):
-        mlog(" [%s] Connected to RabbitMQ" % (self.logkey,))
         self.heartbeat = IntervalScheduler(connection, callback=self.tick, interval=60)
         AmqpBase.on_connected(self, connection)
 
@@ -40,8 +39,10 @@ class AmqpMetalServer(AmqpBase):
 
     def on_request(self, ch, method, props, body):
         mlog(" [%s] Got request %r:%r" % (self.logkey, method.routing_key, body,))
-        if 'announce_worker.metal' == method.routing_key:
+        #announcements from a worker
+        if method.routing_key in ('worker_alive.metal', 'worker_ping_reply.metal'):
             self.check_worker(body)
+        #request from hub
         elif 'ping.metal' == method.routing_key:
             self.ping_reply()
         else:
@@ -53,14 +54,16 @@ class AmqpMetalServer(AmqpBase):
     def ping_reply(self, routing_key='metal_ping_reply.hub'):
         data = {}
         data['envelope'] = {
-            'uuid': self.config['host-uuid'],
+            'host-uuid': self.config['host-uuid'],
             'hostname': self.config['hostname']
         }
         try:
             data['workers'] = [w for w in self.config['var']['found_workers'].values()]
         except KeyError:
             data['workers'] = []
-        print simplejson.dumps(data)
+        data['metal'] = {
+            'platform': self.config['var']['identity']['platform']
+        }
         self.send(simplejson.dumps(data),
                   exchange_name = self.exchange_name,
                   routing_key = routing_key,
@@ -82,22 +85,38 @@ class AmqpMetalServer(AmqpBase):
         mlog(" [%s] check worker %s" % (self.logkey, repr(workeraddrlist)))
 
         for name, worker in self.config['var']['vmhostdefinitions'].items():
+            if not name in self.vmadapter.guests:
+                mlog(" [%s] Configuration error: %s is not a defined guest" %(self.logkey, name))
+                continue
             for hwaddr in workeraddrlist:
                 if hwaddr in worker['hwaddr']:
-                    print 'FOUND', name
+                    mlog(" [%s] FOUND %s" %(self.logkey, name))
                     try:
                         found_workers = self.config['var']['found_workers']
                     except KeyError:
                         found_workers = {}
                     try:
                         found_workers[name] = body['worker']
-                        found_workers[name]['uuid'] = body['envelope']['uuid']
+                        found_workers[name]['host-uuid'] = body['envelope']['host-uuid']
                         del found_workers[name]['hwaddrlist']
                     except KeyError:
                         pass
+                    if not found_workers[name]['host-uuid']:
+#need to inform worker of its uuid
+                        guest = self.vmadapter.guests[name]
+                        found_workers[name]['host-uuid'] = guest['uuid']
+                        self.update_guest_config(hwaddr, found_workers[name])
                     self.config_object.set_var({'found_workers': found_workers})
                     self.config_object.save()
                     break
+
+    def update_guest_config(self, hwaddr, worker):
+        print "Update guest config", worker, hwaddr+'.update_config.worker'
+        self.send(simplejson.dumps(worker),
+                  exchange_name = self.exchange_name,
+                  #routing_key = hwaddr+'.update_config.worker',
+                  routing_key = 'update_config.%s'%hwaddr,
+                  props = { 'content_type': 'application/json' })
 
     def shutdown(self):
         mlog(" [%s] exiting"% (self.logkey,))

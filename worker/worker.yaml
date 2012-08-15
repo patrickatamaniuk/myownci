@@ -1,5 +1,3 @@
-host-uuid: f7bf4899-6b87-4ef0-b704-a12c455b718b
-hostname: precise-ci
 amqp-server:
   address: "10.1.1.203"
   username: guest

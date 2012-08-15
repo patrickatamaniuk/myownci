@@ -15,9 +15,10 @@ class Identity:
         self.id['processor'] = uname[5]
         self.id['architecture'], self.id['exeformat'] = platform.architecture()
         try:
-          self.id['distribution'] = [x for x in platform.linux_distribution()]
+          self.id['distribution'] = platform.linux_distribution()[:2]
         except:
-          self.id['distribution'] = ('?', '?', '?')
+          self.id['distribution'] = ('', '')
+        self.id['platform'] = platform.platform() #human readable, most portable
 
     def get_hw_addr(self):
         for line in subprocess.check_output(['ifconfig', '-a']).split("\n"):
