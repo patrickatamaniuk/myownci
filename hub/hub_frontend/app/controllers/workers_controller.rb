@@ -21,36 +21,9 @@ class WorkersController < ApplicationController
     end
   end
 
-  # GET /workers/new
-  # GET /workers/new.json
-  def new
-    @worker = Worker.new
-
-    respond_to do |format|
-      format.html # new.html.erb
-      format.json { render json: @worker }
-    end
-  end
-
   # GET /workers/1/edit
   def edit
     @worker = Worker.find(params[:id])
-  end
-
-  # POST /workers
-  # POST /workers.json
-  def create
-    @worker = Worker.new(params[:worker])
-
-    respond_to do |format|
-      if @worker.save
-        format.html { redirect_to @worker, notice: 'Worker was successfully created.' }
-        format.json { render json: @worker, status: :created, location: @worker }
-      else
-        format.html { render action: "new" }
-        format.json { render json: @worker.errors, status: :unprocessable_entity }
-      end
-    end
   end
 
   # PUT /workers/1

@@ -3,12 +3,10 @@
 <table>
   <tr>
     <th>Id</th>
+    <th>State</th>
     <th>Repo</th>
     <th>Commit</th>
     <th>Created</th>
-    <th></th>
-    <th></th>
-    <th></th>
   </tr>
 
 <% odd = false
@@ -22,10 +20,10 @@
   %>
   <tr class="<%= oddeven %>">
     <% if can?(:read, request) %><td><%= link_to request.id, request %></td><% end %>
+    <td><%= request.state %></td>
     <td><%= request.repo %></td>
     <td><%= request.commit %></td>
     <td><%= request.created_at %></td>
-    <% if can?(:destroy, request) %><td><%= link_to 'Destroy', request, method: :delete, data: { confirm: 'Are you sure?' } %></td><% end %>
   </tr>
 <% end %>
 </table>

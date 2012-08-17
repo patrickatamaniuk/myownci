@@ -3,9 +3,9 @@
 <table>
   <tr>
     <th>Name</th>
-    <th>Uuid</th>
-    <th>Last seen at</th>
     <th>State</th>
+    <th>Platform</th>
+    <th>Last seen at</th>
     <th></th>
     <th></th>
     <th></th>
@@ -14,9 +14,9 @@
 <% @metals.each do |metal| %>
   <tr>
     <td><%= metal.name %></td>
-    <td><%= metal.uuid %></td>
-    <td><%= metal.last_seen_at %></td>
     <td><%= metal.state %></td>
+    <td><%= metal.platform %></td>
+    <td><%= metal.last_seen_at %></td>
     <td><%= link_to 'Show', metal %></td>
     <td><%= link_to 'Destroy', metal, method: :delete, data: { confirm: 'Are you sure?' } %></td>
   </tr>

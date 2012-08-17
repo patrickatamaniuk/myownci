@@ -1,40 +1,8 @@
 <p id="notice"><%= notice %></p>
 
 <p>
-  <b>Repo:</b>
-  <%= @job.repo %>
-</p>
-
-<p>
-  <b>Commit:</b>
-  <%= @job.commit %>
-</p>
-
-<p>
-  <b>Started:</b>
-  <%= @job.started %>
-</p>
-
-<p>
-  <b>Finished:</b>
-  <%= @job.finished %>
-</p>
-
-<p>
   <b>Worker:</b>
   <%= @job.worker %>
 </p>
 
-<p>
-  <b>Running:</b>
-  <%= @job.running %>
-</p>
-
-<p>
-  <b>Success:</b>
-  <%= @job.success %>
-</p>
-
-
-<%= link_to 'Edit', edit_job_path(@job) %> |
 <%= link_to 'Back', jobs_path %>

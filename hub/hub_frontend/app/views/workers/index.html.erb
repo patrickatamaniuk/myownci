@@ -3,10 +3,11 @@
 <table>
   <tr>
     <th>Name</th>
-    <th>Ip</th>
-    <th>Vmimage</th>
-    <th>Vmname</th>
-    <th>Snapshottag</th>
+    <th>State</th>
+    <th>Capabilities</th>
+    <th>Platform</th>
+    <th>Metal</th>
+    <th>Last seen</th>
     <th></th>
     <th></th>
     <th></th>
@@ -15,17 +16,14 @@
 <% @workers.each do |worker| %>
   <tr>
     <td><%= worker.name %></td>
-    <td><%= worker.ip %></td>
-    <td><%= worker.vmimage %></td>
-    <td><%= worker.vmname %></td>
-    <td><%= worker.snapshottag %></td>
+    <td><%= worker.state %></td>
+    <td><%= worker.capabilities %></td>
+    <td><%= worker.platform %></td>
+    <td><%= worker.metal.name %></td>
+    <td><%= worker.last_seen_at %></td>
     <td><%= link_to 'Show', worker %></td>
     <td><%= link_to 'Edit', edit_worker_path(worker) %></td>
     <td><%= link_to 'Destroy', worker, method: :delete, data: { confirm: 'Are you sure?' } %></td>
   </tr>
 <% end %>
 </table>
-
-<br />
-
-<%= link_to 'New Worker', new_worker_path %>
