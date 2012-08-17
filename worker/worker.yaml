@@ -1,5 +1,5 @@
 amqp-server:
-  address: "10.1.1.203"
+  address: "amqp.ci.example.net"
   username: guest
   password: guest
 capabilities: [ruby python]

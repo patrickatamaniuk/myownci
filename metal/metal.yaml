@@ -1,8 +1,8 @@
 ---
-hostname: videohorst
+hostname: host0
 host-uuid: b6de1cfa-a844-45b3-91c0-3a3cb21be638
 amqp-server:
-  address: "10.1.1.203"
+  address: "amqp.ci.example.net"
   username: guest
   password: guest
 workers:
