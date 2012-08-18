@@ -40,7 +40,9 @@ class AmqpMetalServer(AmqpBase):
     def on_request(self, ch, method, props, body):
         mlog(" [%s] Got request %r:%r" % (self.logkey, method.routing_key, body,))
         #announcements from a worker
-        if method.routing_key in ('worker_alive.metal', 'worker_ping_reply.metal'):
+        if method.routing_key in ('worker_alive.metal',
+            'worker_ping_reply.metal',
+            'worker_request_uuid.metal'):
             self.check_worker(body)
         #request from hub
         elif 'ping.metal' == method.routing_key:
