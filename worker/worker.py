@@ -64,23 +64,30 @@ class Worker(AmqpBase):
             #update command from metal
             if 'update_config' == cmd:
                 body = simplejson.loads(body)
-                self.update_config(body)
+                self.cmd_update_config(body)
 
         #ping request from metal
         elif 'ping' == cmd:
-            self.ping_reply()
+            self.cmd_ping()
         else:
             mlog(" [%s] Unknown request %r" % (self.logkey, method.routing_key))
 
-    def send_alive(self):
-        self.ping_reply(routing_key='worker_alive.metal')
+    def cmd_request_uuid(self):
+        self.timeouts['request_uuid'] = time.time()+15
+        self.send_message(routing_key='worker_request_uuid.metal')
+
+    def cmd_send_alive(self):
         self.timeouts['send_alive'] = time.time()+240
+        self.send_message(routing_key='worker_alive.metal')
 
-    def request_job(self):
+    def cmd_request_job(self):
         self.timeouts['request_job'] = time.time()+self.request_timeout
-        self.ping_reply(routing_key='worker_requests_job.hub')
+        self.send_message(routing_key='worker_requests_job.hub')
 
-    def ping_reply(self, routing_key='worker_ping_reply.metal'):
+    def cmd_ping(self):
+        self.send_message(routing_key='worker_ping_reply.metal')
+
+    def send_message(self, routing_key='worker_ping_reply.metal'):
         data = {}
         data['envelope'] = {
             'host-uuid': self.uuid,
@@ -95,8 +102,13 @@ class Worker(AmqpBase):
             props = { 'content_type': 'application/json' })
         #mlog(" [%s] Sent %r:%r" % (self.logkey, routing_key, repr(data)))
 
-    def update_config(self, body):
+    def remove_timeout(self, timeout):
+        if timeout in self.timeouts:
+            del self.timeouts[timeout]
+
+    def cmd_update_config(self, body):
         mlog(" [%s] got uuid %s" % (self.logkey, body['host-uuid']))
+        self.remove_timeout('request_uuid')
         self.uuid = body['host-uuid']
         self.config_object.set_var({'uuid' : self.uuid})
         self.config_object.save()
@@ -114,19 +126,21 @@ class Worker(AmqpBase):
                 del self.timeouts[k]
                 if k == 'request_job':
                     self.enter_state('configured')
+                elif k == 'request_uuid':
+                    self.cmd_request_uuid()
                 elif k == 'send_alive':
-                    self.send_alive()
+                    self.cmd_send_alive()
 
     def enter_state(self, state):
         self.state = state
         mlog(" [%s] enter state: %s" % (self.logkey, self.state))
         if state == 'configured':
-            self.connection.add_timeout(1, self.send_alive)
+            self.connection.add_timeout(1, self.cmd_send_alive)
             self.enter_state('request_job')
         elif state == 'request_uuid':
-            self.connection.add_timeout(1, self.send_alive)
+            self.connection.add_timeout(1, self.cmd_request_uuid)
         elif state == 'request_job':
-            self.connection.add_timeout(1, self.request_job)
+            self.connection.add_timeout(1, self.cmd_request_job)
 
 def main():
     config = Config('worker.yaml')
