@@ -17,6 +17,7 @@ class AmqpMetalServer(AmqpBase):
     routing_key = '*.metal'
     logkey = 'metal'
     def __init__(self, config):
+        self.state = 'unconfigured'
         config.set_var({'identity' : Identity().id})
         config.save()
 
@@ -31,6 +32,7 @@ class AmqpMetalServer(AmqpBase):
         AmqpBase.on_connected(self, connection)
 
     def on_ready(self):
+        self.state = 'ready'
         self.connection.add_timeout(2, self.announce_self)
 
     def tick(self):
@@ -64,7 +66,8 @@ class AmqpMetalServer(AmqpBase):
         except KeyError:
             data['workers'] = []
         data['metal'] = {
-            'platform': self.config['var']['identity']['platform']
+            'platform': self.config['var']['identity']['platform'],
+            'state': self.state
         }
         self.send(simplejson.dumps(data),
                   exchange_name = self.exchange_name,
@@ -97,16 +100,18 @@ class AmqpMetalServer(AmqpBase):
                         found_workers = self.config['var']['found_workers']
                     except KeyError:
                         found_workers = {}
+                    guest_uuid = None
                     try:
                         found_workers[name] = body['worker']
-                        found_workers[name]['host-uuid'] = body['envelope']['host-uuid']
+                        guest_uuid = body['envelope']['host-uuid']
                         del found_workers[name]['hwaddrlist']
                     except KeyError:
                         pass
-                    if not found_workers[name]['host-uuid']:
+                    if not guest_uuid:
 #need to inform worker of its uuid
                         guest = self.vmadapter.guests[name]
                         found_workers[name]['host-uuid'] = guest['uuid']
+                        mlog(" [%s] remembering guest uuid: %s" % (self.logkey, repr(guest['uuid'])))
                         self.update_guest_config(hwaddr, found_workers[name])
                     self.config_object.set_var({'found_workers': found_workers})
                     self.config_object.save()
