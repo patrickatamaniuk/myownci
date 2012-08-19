@@ -36,7 +36,7 @@ class Worker(AmqpBase):
             self.routing_key.append("*.%s"%hwaddr)
 
         try:
-            self.uuid = config.config['var']['uuid'],
+            self.uuid = config.config['var']['uuid']
             self.routing_key.append("*.%s"%self.uuid)
         except KeyError:
             self.uuid = None
@@ -100,15 +100,16 @@ class Worker(AmqpBase):
             exchange_name = self.exchange_name,
             routing_key = routing_key,
             props = { 'content_type': 'application/json' })
-        #mlog(" [%s] Sent %r:%r" % (self.logkey, routing_key, repr(data)))
+        mlog(" [%s] Sent %r:%r" % (self.logkey, routing_key, repr(data)))
 
     def remove_timeout(self, timeout):
         if timeout in self.timeouts:
             del self.timeouts[timeout]
 
     def cmd_update_config(self, body):
-        mlog(" [%s] got uuid %s" % (self.logkey, body['host-uuid']))
+        mlog(" [%s] got uuid %s" % (self.logkey, repr(body['host-uuid'])))
         self.remove_timeout('request_uuid')
+        print "UPDATE self.uuid", body['host-uuid']
         self.uuid = body['host-uuid']
         self.config_object.set_var({'uuid' : self.uuid})
         self.config_object.save()
