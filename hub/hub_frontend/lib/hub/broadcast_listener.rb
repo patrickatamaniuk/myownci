@@ -25,13 +25,21 @@ module Hub
           return
         end
         Rails.logger.info("[AMQP] Received app:\"#{metadata.app_id}\" #{metadata.routing_key}")
+
         case metadata.routing_key
         when 'metal_alive.hub'
           MetalsHelper::create_from_push(data)
+        when 'worker_requests_job.hub'
+          dispatch_job(data)
         end
         metadata.ack
       end
       Rails.logger.info('[AMQP] BroadcastListener started')
     end
+
+    def dispatch_job(data)
+      Rails.logger.info("Worker requests job #{data}")
+    end
+
   end
 end

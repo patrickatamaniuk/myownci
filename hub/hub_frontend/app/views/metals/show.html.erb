@@ -20,5 +20,14 @@
   <%= @metal.state %>
 </p>
 
+<p>
+  <b>Workers:</b>
+  <% @metal.workers.each{|worker| %>
+  <p>
+  <%= worker.name %>
+  </p>
+  <% } %>
+</p>
+
 
 <%= link_to 'Back', metals_path %>
