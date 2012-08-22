@@ -6,12 +6,10 @@
 # sudo pip install simpleyaml
 # sudo pip install pika
 import simplejson
-import time
 
 from myownci.Config import Config
 from myownci.Identity import Identity
 from myownci.Amqp import AmqpBase
-from myownci.IntervalScheduler import IntervalScheduler
 from myownci.StateEngine import StateEngine
 from myownci import mlog
 
@@ -19,20 +17,13 @@ class Worker(AmqpBase, StateEngine):
     logkey = 'worker'
     routing_key = ['*.worker']
     app_id = 'worker'
-    tick_interval = 5
     request_timeout = 56
-    stateengine = None
 
     def __init__(self, config):
         StateEngine.__init__(self, {
-            'ev_connected':{
-                '*': {},
-                'unconfigured': {'nextstate':'connected'},
-            },
             'ev_amqpready': {
                 '*': {},
                 'unconfigured': {'nextstate':'ready'},
-                'connected': {'nextstate':'ready'},
             },
             'ev_request_uuid': {
                 '*': {},
@@ -50,10 +41,7 @@ class Worker(AmqpBase, StateEngine):
         }, 'unconfigured')
 
         self.uuid = None
-        self.heartbeat = None
         self.identity = Identity()
-
-        self.timeouts = {}
 
         config.set_var({'identity' : self.identity.id})
         config.save()
@@ -69,13 +57,10 @@ class Worker(AmqpBase, StateEngine):
 
         AmqpBase.__init__(self, config)
 
-    def on_connected(self, connection):
-        self.heartbeat = IntervalScheduler(connection, callback=self.tick, interval=self.tick_interval)
-        AmqpBase.on_connected(self, connection)
-        self.event('ev_connected')
-
     def on_ready(self):
+        self.start_timeouts(self.connection)
         self.event('ev_amqpready')
+
     def on_state_ready(self):
         if not self.uuid:
             self.event('ev_request_uuid')
@@ -101,7 +86,7 @@ class Worker(AmqpBase, StateEngine):
             mlog(" [%s] Unknown request %r" % (self.logkey, method.routing_key))
 
     def on_state_request_uuid(self):
-        self.add_timeout('request_uuid', 15, self.on_state_request_uuid)
+        self.add_timeout('request_uuid', 15, self.on_state_request_uuid) #loop
         self.send_message(routing_key='worker_request_uuid.metal')
 
     def on_state_configured(self):
@@ -109,13 +94,13 @@ class Worker(AmqpBase, StateEngine):
         self.event('ev_request_job')
 
     def on_state_request_job(self):
-        self.add_timeout('request_job', self.request_timeout, self.on_timeout_request_job)
+        self.add_timeout('request_job', self.request_timeout, self.on_timeout_request_job) #loop
         self.send_message(routing_key='worker_requests_job.hub')
     def on_timeout_request_job(self):
         self.on_state_request_job()
 
     def cmd_send_alive(self):
-        self.add_timeout('send_alive', 240, self.cmd_send_alive)
+        self.add_timeout('send_alive', 240, self.cmd_send_alive) #loop
         self.send_message(routing_key='worker_alive.metal')
 
     def cmd_ping(self):
@@ -148,21 +133,6 @@ class Worker(AmqpBase, StateEngine):
         #mlog(" [%s] added routing key %s" % (self.logkey, routing_key))
         self.event('ev_configured')
 
-    def add_timeout(self, key, seconds, callback):
-        self.timeouts[key] = { 'when':time.time()+seconds, 'cmd':callback }
-    def remove_timeout(self, key):
-        if key in self.timeouts:
-            del self.timeouts[key]
-
-    def tick(self):
-        mlog(" [%s] tick  state: %s" % (self.logkey, self.state))
-        now = time.time()
-        for k, t in self.timeouts.items():
-            if now > t['when']:
-                mlog(" [%s] timeout for %s" % (self.logkey, k))
-                if 'cmd' in t:
-                    t['cmd']()
-                del self.timeouts[k]
 
 def main():
     config = Config('worker.yaml')
