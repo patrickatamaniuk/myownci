@@ -12,17 +12,43 @@ from myownci.Config import Config
 from myownci.Identity import Identity
 from myownci.Amqp import AmqpBase
 from myownci.IntervalScheduler import IntervalScheduler
+from myownci.StateEngine import StateEngine
 from myownci import mlog
 
-class Worker(AmqpBase):
+class Worker(AmqpBase, StateEngine):
     logkey = 'worker'
     routing_key = ['*.worker']
     app_id = 'worker'
     tick_interval = 5
     request_timeout = 56
+    stateengine = None
 
     def __init__(self, config):
-        self.state = 'unconfigured'
+        StateEngine.__init__(self, {
+            'ev_connected':{
+                '*': {},
+                'unconfigured': {'nextstate':'connected'},
+            },
+            'ev_amqpready': {
+                '*': {},
+                'unconfigured': {'nextstate':'ready'},
+                'connected': {'nextstate':'ready'},
+            },
+            'ev_request_uuid': {
+                '*': {},
+                'ready': {'nextstate':'request_uuid'},
+            },
+            'ev_configured': {
+                '*': {'nextstate':'configured'},
+            },
+            'ev_request_job': {
+                'configured': {'nextstate':'request_job'}
+            },
+            'timeout': {
+                'request_job': {}
+            }
+        }, 'unconfigured')
+
         self.uuid = None
         self.heartbeat = None
         self.identity = Identity()
@@ -46,13 +72,15 @@ class Worker(AmqpBase):
     def on_connected(self, connection):
         self.heartbeat = IntervalScheduler(connection, callback=self.tick, interval=self.tick_interval)
         AmqpBase.on_connected(self, connection)
-        self.enter_state('connected')
+        self.event('ev_connected')
 
     def on_ready(self):
+        self.event('ev_amqpready')
+    def on_state_ready(self):
         if not self.uuid:
-            self.enter_state('request_uuid')
+            self.event('ev_request_uuid')
         else:
-            self.enter_state('configured')
+            self.event('ev_configured')
 
     def on_request(self, ch, method, props, body):
         mlog(" [%s] Got request %r" % (self.logkey, method.routing_key))
@@ -72,17 +100,23 @@ class Worker(AmqpBase):
         else:
             mlog(" [%s] Unknown request %r" % (self.logkey, method.routing_key))
 
-    def cmd_request_uuid(self):
-        self.timeouts['request_uuid'] = time.time()+15
+    def on_state_request_uuid(self):
+        self.add_timeout('request_uuid', 15, self.on_state_request_uuid)
         self.send_message(routing_key='worker_request_uuid.metal')
 
-    def cmd_send_alive(self):
-        self.timeouts['send_alive'] = time.time()+240
-        self.send_message(routing_key='worker_alive.metal')
+    def on_state_configured(self):
+        self.connection.add_timeout(1, self.cmd_send_alive)
+        self.event('ev_request_job')
 
-    def cmd_request_job(self):
-        self.timeouts['request_job'] = time.time()+self.request_timeout
+    def on_state_request_job(self):
+        self.add_timeout('request_job', self.request_timeout, self.on_timeout_request_job)
         self.send_message(routing_key='worker_requests_job.hub')
+    def on_timeout_request_job(self):
+        self.on_state_request_job()
+
+    def cmd_send_alive(self):
+        self.add_timeout('send_alive', 240, self.cmd_send_alive)
+        self.send_message(routing_key='worker_alive.metal')
 
     def cmd_ping(self):
         self.send_message(routing_key='worker_ping_reply.metal')
@@ -102,10 +136,6 @@ class Worker(AmqpBase):
             props = { 'content_type': 'application/json' })
         mlog(" [%s] Sent %r:%r" % (self.logkey, routing_key, repr(data)))
 
-    def remove_timeout(self, timeout):
-        if timeout in self.timeouts:
-            del self.timeouts[timeout]
-
     def cmd_update_config(self, body):
         mlog(" [%s] got uuid %s" % (self.logkey, repr(body['host-uuid'])))
         self.remove_timeout('request_uuid')
@@ -116,32 +146,23 @@ class Worker(AmqpBase):
         self.add_routing_key("*.%s" % (self.uuid, ))
         routing_key = "*.%s" % (self.uuid, )
         #mlog(" [%s] added routing key %s" % (self.logkey, routing_key))
-        self.enter_state('configured')
+        self.event('ev_configured')
+
+    def add_timeout(self, key, seconds, callback):
+        self.timeouts[key] = { 'when':time.time()+seconds, 'cmd':callback }
+    def remove_timeout(self, key):
+        if key in self.timeouts:
+            del self.timeouts[key]
 
     def tick(self):
         mlog(" [%s] tick  state: %s" % (self.logkey, self.state))
         now = time.time()
         for k, t in self.timeouts.items():
-            if now > t:
+            if now > t['when']:
                 mlog(" [%s] timeout for %s" % (self.logkey, k))
+                if 'cmd' in t:
+                    t['cmd']()
                 del self.timeouts[k]
-                if k == 'request_job':
-                    self.enter_state('configured')
-                elif k == 'request_uuid':
-                    self.cmd_request_uuid()
-                elif k == 'send_alive':
-                    self.cmd_send_alive()
-
-    def enter_state(self, state):
-        self.state = state
-        mlog(" [%s] enter state: %s" % (self.logkey, self.state))
-        if state == 'configured':
-            self.connection.add_timeout(1, self.cmd_send_alive)
-            self.enter_state('request_job')
-        elif state == 'request_uuid':
-            self.connection.add_timeout(1, self.cmd_request_uuid)
-        elif state == 'request_job':
-            self.connection.add_timeout(1, self.cmd_request_job)
 
 def main():
     config = Config('worker.yaml')
