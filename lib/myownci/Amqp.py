@@ -1,6 +1,6 @@
 import sys, time
 import pika
-from myownci import mlog
+from logging import debug, info, error
 
 class AmqpBase:
     logkey = 'metal'
@@ -15,8 +15,16 @@ class AmqpBase:
                      self.config['amqp-server']['username'],
                      self.config['amqp-server']['password'])
 
+    def defer(self, delay, command, *args, **kwargs):
+        if delay:
+            debug(" -- deferring %s %s"% ( command, delay ))
+            self.connection.add_timeout(delay, lambda :command(*args, **kwargs) )
+        else:
+            debug(" -- calling %s"% ( command, ))
+            command(*args, **kwargs)
+
     def connect(self, server, username, password):
-        mlog(" [%s] Connecting to %s"% (self.logkey, server,) )
+        info(" [%s] Connecting to %s"% (self.logkey, server,) )
         credentials = pika.PlainCredentials(username, password)
         try:
             self.connection = pika.SelectConnection(pika.ConnectionParameters(
@@ -24,7 +32,7 @@ class AmqpBase:
                 credentials = credentials),
                 self.on_connected)
         except Exception, e:
-            mlog(" [%s] Connection error" % (self.logkey, ), e)
+            error(" [%s] Connection error" % (self.logkey, ), e)
             time.sleep(60)
             sys.exit(3)
         try:
@@ -34,24 +42,24 @@ class AmqpBase:
             self.connection.ioloop.start()
 
     def on_connected(self, connection):
-        mlog(" [%s] Connected to RabbitMQ" % (self.logkey,))
+        info(" [%s] Connected to RabbitMQ" % (self.logkey,))
         connection.channel(self.on_channel_open)
 
     def on_channel_open(self, channel_):
         self.channel = channel_
-        mlog(" [%s] Received our Channel" % (self.logkey,))
+        debug(" [%s] Received our Channel" % (self.logkey,))
 
         self.channel.exchange_declare(exchange=self.exchange_name,
                                  type='topic',
                                  callback=self.on_exchange_declared)
 
     def on_exchange_declared(self, frame):
-        mlog(" [%s] Excange %s declared" %(self.logkey, self.exchange_name,))
+        debug(" [%s] Excange %s declared" %(self.logkey, self.exchange_name,))
         self.channel.queue_declare(exclusive=True,
                                   callback=self.on_queue_declared)
 
     def on_queue_declared(self, frame):
-        mlog(" [%s] Queue declared" % (self.logkey,))
+        debug(" [%s] Queue declared" % (self.logkey,))
         self.queue = frame.method.queue
         if type(self.routing_key) == type(""):
             self.routing_key = [self.routing_key]
@@ -77,7 +85,7 @@ class AmqpBase:
         self.consume()
 
     def consume(self):
-        mlog(" [%s] Awaiting RPC requests" % (self.logkey,))
+        info(" [%s] Awaiting RPC requests" % (self.logkey,))
         self.channel.basic_consume(self.on_request,
                               queue=self.queue,
                               no_ack=True)
@@ -90,7 +98,7 @@ class AmqpBase:
           self.request_callback(ch, method, props, body)
 
     def reply(self, response, ch, props):
-        #mlog(" [%s] Sending reply" % (self.logkey, ))
+        debug(" [%s] Sending reply" % (self.logkey, ))
         ch.basic_publish(exchange='',
                          routing_key=props.reply_to,
                          properties=pika.BasicProperties(correlation_id = \
@@ -98,7 +106,7 @@ class AmqpBase:
                          body=response)
 
     def send(self, body, exchange_name='', routing_key='', props=None):
-        mlog(" [%s] Sending %s" % (self.logkey, routing_key))
+        debug(" [%s] Sending %s" % (self.logkey, routing_key))
         if props is None:
           props = {}
         props['app_id'] = self.app_id
