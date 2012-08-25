@@ -1,6 +1,4 @@
-import sys
+import logging
 def mlog(*args):
-  sys.stderr.write(u' '.join(["%s"%a for a in args]))
-  sys.stderr.write(u'\n')
-  sys.stderr.flush()
+  logging.info(u' '.join(["%s"%a for a in args]))
 

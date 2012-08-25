@@ -6,6 +6,8 @@
 import sys, time, atexit
 import pika
 import simplejson
+import logging
+from logging import debug
 from myownci import mlog
 from myownci.Config import Config
 from myownci.Identity import Identity
@@ -53,6 +55,7 @@ class AmqpMetalServer(AmqpBase):
             mlog(" [%s] Unknown request %r" % (self.logkey, method.routing_key))
 
     def announce_self(self):
+        self.get_worker_status()
         self.ping_reply(routing_key='metal_alive.hub') #reuse
 
     def ping_reply(self, routing_key='metal_ping_reply.hub'):
@@ -89,10 +92,17 @@ class AmqpMetalServer(AmqpBase):
             return
         mlog(" [%s] check worker %s" % (self.logkey, repr(workeraddrlist)))
 
-        for name, worker in self.config['var']['vmhostdefinitions'].items():
-            if not name in self.vmadapter.guests:
+#FIXME: implement vmadapter.find_by_uuid and vmadapter.find_by_hwaddr
+#FIXME seed found_workers with defined workers so hub gets them even they did not announce themselves yet
+        for configured_worker in self.config['workers']:
+            debug('Check %r'% configured_worker)
+            name = configured_worker['name']
+#        for name, worker in self.config['var']['vmhostdefinitions'].items():
+            if not name in self.config['var']['vmhostdefinitions']:
                 mlog(" [%s] Configuration error: %s is not a defined guest" %(self.logkey, name))
                 continue
+            worker =  self.config['var']['vmhostdefinitions'][name]
+
             for hwaddr in workeraddrlist:
                 if hwaddr in worker['hwaddr']:
                     mlog(" [%s] FOUND %s" %(self.logkey, name))
@@ -113,12 +123,13 @@ class AmqpMetalServer(AmqpBase):
                         found_workers[name]['host-uuid'] = guest['uuid']
                         mlog(" [%s] remembering guest uuid: %s" % (self.logkey, repr(guest['uuid'])))
                         self.update_guest_config(hwaddr, found_workers[name])
+#FIXME found_workers is transported to hub. change name to something like 'workers'
                     self.config_object.set_var({'found_workers': found_workers})
                     self.config_object.save()
                     break
 
     def update_guest_config(self, hwaddr, worker):
-        print "Update guest config", worker, hwaddr+'.update_config.worker'
+        debug("Update guest config %r %r"% (worker, hwaddr+'.update_config.worker'))
         self.send(simplejson.dumps(worker),
                   exchange_name = self.exchange_name,
                   #routing_key = hwaddr+'.update_config.worker',
@@ -127,6 +138,19 @@ class AmqpMetalServer(AmqpBase):
 
     def shutdown(self):
         mlog(" [%s] exiting"% (self.logkey,))
+
+    def get_worker_status(self):
+        config.set_var({'vmhostdefinitions': self.vmadapter.ls()})
+        #debug( self.config)
+        for worker in self.config['workers']:
+            debug('Update %r' %(worker))
+            name = worker['name']
+            if not worker['name'] in self.vmadapter.guests:
+                continue
+            debug(self.config['var']['vmhostdefinitions'][name])
+            #debug('KNOWN found worker?:%r' % (self.config['var']['found_workers']))
+
+        return
  
 server = None
 def cleanup():
@@ -134,6 +158,7 @@ def cleanup():
     server.shutdown()
 
 if __name__ == '__main__':
+  logging.basicConfig(level=logging.DEBUG)
   config = Config('metal.yaml')
   server = AmqpMetalServer(config)
   atexit.register(cleanup)

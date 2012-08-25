@@ -37,7 +37,7 @@ class VmKVM(VmBase):
         except OSError, e:
                 return {}
 
-        for domain_name in guests:
+        for domain_name, guest in guests.items():
             #print repr(domain_name)
             try:
                 xml = subprocess.check_output(['virsh', 'dumpxml', domain_name])
@@ -48,6 +48,7 @@ class VmKVM(VmBase):
             self.guests[domain_name] = {}
             self.guests[domain_name]['name'] = domxml.find('name').text
             self.guests[domain_name]['uuid'] = domxml.find('uuid').text
+            self.guests[domain_name]['state'] = guest['state']
             self.guests[domain_name]['hwaddr'] = []
             for interfacexml in domxml.find('devices').findall('interface'):
                 mac = interfacexml.find('mac')
