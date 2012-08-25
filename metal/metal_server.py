@@ -7,7 +7,7 @@ import sys, time, atexit
 import pika
 import simplejson
 import logging
-from logging import debug
+from logging import debug, warning
 from myownci import mlog
 from myownci.Config import Config
 from myownci.Identity import Identity
@@ -44,9 +44,10 @@ class AmqpMetalServer(AmqpBase):
     def on_request(self, ch, method, props, body):
         mlog(" [%s] Got request %r:%r" % (self.logkey, method.routing_key, body,))
         #announcements from a worker
-        if method.routing_key in ('worker_alive.metal',
-            'worker_ping_reply.metal',
-            'worker_request_uuid.metal'):
+        if method.routing_key in ('worker_request_uuid.metal',):
+            self.provide_uuid_for_worker(body)
+        elif method.routing_key in ('worker_alive.metal',
+            'worker_ping_reply.metal'):
             self.check_worker(body)
         #request from hub
         elif 'ping.metal' == method.routing_key:
@@ -54,6 +55,14 @@ class AmqpMetalServer(AmqpBase):
         else:
             mlog(" [%s] Unknown request %r" % (self.logkey, method.routing_key))
 
+    def jsondecode(self, string):
+        try:
+            body = simplejson.loads(string)
+        except simplejson.decoder.JSONDecodeError:
+            warning(" [%s] invalid request" % (self.logkey, ))
+            return None
+        return body
+        
     def announce_self(self):
         self.get_worker_status()
         self.ping_reply(routing_key='metal_alive.hub') #reuse
@@ -76,63 +85,85 @@ class AmqpMetalServer(AmqpBase):
                   exchange_name = self.exchange_name,
                   routing_key = routing_key,
                   props = { 'content_type': 'application/json' })
-        #mlog(" [%s] Sent %r:%r" % (self.logkey, routing_key, repr(data)))
+        mlog(" [%s] Sent %r:%r" % (self.logkey, routing_key, repr(data)))
         mlog(" [%s] Sent %r" % (self.logkey, routing_key))
 
-    def check_worker(self, body):
-        try:
-            body = simplejson.loads(body)
-        except simplejson.decoder.JSONDecodeError:
-            mlog(" [%s] invalid request from worker" % (self.logkey, ))
+    def find_vminfo_by_hwaddr(self, addrlist):
+        for configured_worker in self.config['workers']:
+            debug('Check %r'% configured_worker)
+            name = configured_worker['name']
+            if not name in self.config['var']['vmhostdefinitions']:
+                mlog(" [%s] Configuration error: %s is not a defined guest" %(self.logkey, name))
+                continue
+            guest =  self.config['var']['vmhostdefinitions'][name]
+            for addr in addrlist:
+                if addr in guest['hwaddr']:
+                    mlog(" [%s] FOUND %s" %(self.logkey, name))
+                    return guest
+        return None
+
+    def find_vminfo_by_uuid(self, uuid):
+        for configured_worker in self.config['workers']:
+            debug('Check %r'% configured_worker)
+            name = configured_worker['name']
+            if not name in self.config['var']['vmhostdefinitions']:
+                mlog(" [%s] Configuration error: %s is not a defined guest" %(self.logkey, name))
+                continue
+            guest =  self.config['var']['vmhostdefinitions'][name]
+            if uuid == guest['uuid']:
+                mlog(" [%s] FOUND %s" %(self.logkey, name))
+                return guest
+        return None
+
+    def provide_uuid_for_worker(self, body):
+        body = self.jsondecode(body)
+        if body is None:
             return
         try:
             workeraddrlist = body['worker']['hwaddrlist']
         except KeyError:
-            mlog(" [%s] invalid request from worker" % (self.logkey, ))
+            warning(" [%s] invalid request" % (self.logkey, ))
             return
         mlog(" [%s] check worker %s" % (self.logkey, repr(workeraddrlist)))
+        vminfo = self.find_vminfo_by_hwaddr(workeraddrlist)
+        if vminfo is None:
+            return
+        self.update_found_workers(vminfo['uuid'], {'host-uuid':vminfo['uuid']})
+        self.update_found_workers(vminfo['uuid'], body['worker'])
+        self.update_guest_config(workeraddrlist[0], {'host-uuid': vminfo['uuid']})
 
+    def update_found_workers(self, uuid, args):
+        try:
+            found_workers = self.config['var']['found_workers']
+        except KeyError:
+            found_workers = {}
+        if not uuid in found_workers:
+            found_workers[uuid] = {}
+        for k,v in args.items():
+            found_workers[uuid][k] = v
+        self.config_object.set_var({'found_workers': found_workers})
+        self.config_object.save()
+        
+    def check_worker(self, body):
+        body = self.jsondecode(body)
+        if body is None:
+            return
+        vminfo = self.find_vminfo_by_uuid(body['envelope']['host-uuid'])
+        if not vminfo:
+            error('unknown guest %r' % (body['envelope'],))
+            return
+        self.update_found_workers(vminfo['uuid'], {'host-uuid':vminfo['uuid']})
+        self.update_found_workers(vminfo['uuid'], body['worker'])
+        debug(" [%s] updated worker info %r" % (self.logkey, self.config['var']['found_workers']) )
+        self.ping_reply(routing_key='metal_alive.hub') #reuse
+        return
 #FIXME: implement vmadapter.find_by_uuid and vmadapter.find_by_hwaddr
 #FIXME seed found_workers with defined workers so hub gets them even they did not announce themselves yet
-        for configured_worker in self.config['workers']:
-            debug('Check %r'% configured_worker)
-            name = configured_worker['name']
-#        for name, worker in self.config['var']['vmhostdefinitions'].items():
-            if not name in self.config['var']['vmhostdefinitions']:
-                mlog(" [%s] Configuration error: %s is not a defined guest" %(self.logkey, name))
-                continue
-            worker =  self.config['var']['vmhostdefinitions'][name]
-
-            for hwaddr in workeraddrlist:
-                if hwaddr in worker['hwaddr']:
-                    mlog(" [%s] FOUND %s" %(self.logkey, name))
-                    try:
-                        found_workers = self.config['var']['found_workers']
-                    except KeyError:
-                        found_workers = {}
-                    guest_uuid = None
-                    try:
-                        found_workers[name] = body['worker']
-                        guest_uuid = body['envelope']['host-uuid']
-                        del found_workers[name]['hwaddrlist']
-                    except KeyError:
-                        pass
-                    if not guest_uuid:
-#need to inform worker of its uuid
-                        guest = self.vmadapter.guests[name]
-                        found_workers[name]['host-uuid'] = guest['uuid']
-                        mlog(" [%s] remembering guest uuid: %s" % (self.logkey, repr(guest['uuid'])))
-                        self.update_guest_config(hwaddr, found_workers[name])
-#FIXME found_workers is transported to hub. change name to something like 'workers'
-                    self.config_object.set_var({'found_workers': found_workers})
-                    self.config_object.save()
-                    break
 
     def update_guest_config(self, hwaddr, worker):
         debug("Update guest config %r %r"% (worker, hwaddr+'.update_config.worker'))
         self.send(simplejson.dumps(worker),
                   exchange_name = self.exchange_name,
-                  #routing_key = hwaddr+'.update_config.worker',
                   routing_key = 'update_config.%s'%hwaddr,
                   props = { 'content_type': 'application/json' })
 

@@ -2,4 +2,4 @@ amqp-server:
   address: "amqp.ci.example.net"
   username: guest
   password: guest
-capabilities: [ruby python]
+capabilities: [ruby, python]
