@@ -1,7 +1,7 @@
 
 module WorkersHelper
-  def update_from_metal_alive(metal, data)
-      Rails.logger.info("Update worker from metal push #{data}")
+  def WorkersHelper.update_from_metal_alive(metal, data)
+      Rails.logger.info("Update worker from metal_alive #{data}")
       name = data['nodename']
       return if data['host-uuid'].nil?
       uuid = data['host-uuid']

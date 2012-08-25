@@ -1,7 +1,7 @@
 module RequestsHelper
 
-  def create_from_push(data)
-    Rails.logger.info("Creating request from amqp push message")
+  def RequestsHelper.create_from_push(data)
+    Rails.logger.info("create_from_push #{data}")
     #data.each{|k, v|
     #    Rails.logger.info("#  #{k} => #{v}")
     #} if data
@@ -35,7 +35,7 @@ module RequestsHelper
     analyze_request(request)
   end
 
-  def invalid_request(request, message)
+  def RequestsHelper.invalid_request(request, message)
       Rails.logger.error("Invalid request #{request.id} #{message}")
       Rails.logger.error(request.buildconfig)
       Rails.logger.error(cfg)
@@ -43,7 +43,7 @@ module RequestsHelper
       request.save
   end
 
-  def analyze_request(request)
+  def RequestsHelper.analyze_request(request)
     Rails.logger.info('analyzing request')
     cfg = request.buildconfig_parsed
     if cfg.nil? || cfg.empty?

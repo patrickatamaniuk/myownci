@@ -1,13 +1,15 @@
-include WorkersHelper
+require "workers_helper"
 
 module MetalsHelper
-  def create_from_push(data)
-    Rails.logger.info("create_from_push #{data}")
+
+  def MetalsHelper.create_from_metal_alive(data)
+    Rails.logger.info("create_from_metal_alive #{data}")
     return unless data['envelope']
     return unless data['envelope']['host-uuid']
     uuid = data['envelope']['host-uuid']
     save_data = {
       :name => data['envelope']['hostname'],
+      :uuid => uuid,
       :platform => data['metal']['platform'],
       :state => data['metal']['state'],
       :last_seen_at => Time.now
@@ -24,7 +26,7 @@ module MetalsHelper
     end
 
     data['workers'].each{|worker_data|
-      WorkersHelper::update_from_metal_alive(metal, worker_data)
+      WorkersHelper.update_from_metal_alive(metal, worker_data)
     }
   end
 end

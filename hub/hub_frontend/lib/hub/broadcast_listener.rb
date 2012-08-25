@@ -1,5 +1,5 @@
 #see http://rdoc.info/github/ruby-amqp/amqp/master/file/docs/GettingStarted.textile
-include MetalsHelper
+require "metals_helper"
 
 module Hub
   class BroadcastListener
@@ -17,7 +17,7 @@ module Hub
       queue.subscribe(:ack => true) do |metadata, payload|
         data = {}
         begin
-          Rails.logger.info(payload)
+          Rails.logger.debug("Hub::BroadcastListener request payload: #{payload}")
           data = JSON.parse(payload) if payload
         rescue
           Rails.logger.error("[AMQP] Error decoding payload")
@@ -28,7 +28,7 @@ module Hub
 
         case metadata.routing_key
         when 'metal_alive.hub'
-          MetalsHelper::create_from_push(data)
+          MetalsHelper.create_from_metal_alive(data)
         when 'worker_requests_job.hub'
           dispatch_job(data)
         end
@@ -38,7 +38,30 @@ module Hub
     end
 
     def dispatch_job(data)
-      Rails.logger.info("Worker requests job #{data}")
+      uuid = data['envelope']['host-uuid']
+      workrequest = {
+        :host_uuid => uuid,
+        :capabilities => data['worker']['capabilities'],
+        :distribution => data['worker']['distribution'],
+        :architecture => data['worker']['architecture']
+      }
+      worker = Worker.find_by_uuid(uuid)
+      Rails.logger.debug("Worker #{worker} requests job #{workrequest}")
+      if worker.nil?
+        Rails.logger.info("Request from unknown worker #{uuid}")
+        ping_worker(uuid)
+        return
+      end
+      job_candidates = Job.find(:all, :conditions=>{
+        :language => workrequest[:capabilities],
+        :state => 'new'
+      });
+      job_candidates.each{|job|
+        Rails.logger.info("Job candidate: #{job}")
+      }
+    end
+
+    def ping_worker(uuid)
     end
 
   end

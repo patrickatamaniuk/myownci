@@ -1,4 +1,6 @@
 #see http://rdoc.info/github/ruby-amqp/amqp/master/file/docs/GettingStarted.textile
+require "requests_helper"
+
 module Hub
   class CommitListener
     def initialize(channel)
@@ -12,7 +14,7 @@ module Hub
         data = {}
         data = JSON.parse(payload) if payload
         Rails.logger.info("[AMQP] Received app:\"#{metadata.app_id}\" repository_id:\"#{data['repository_id'] if data['repository_id']}\" from queue:#{queue_name}")
-        RequestsHelper::create_from_push(data)
+        RequestsHelper.create_from_push(data)
         metadata.ack
       end
       Rails.logger.info("[AMQP] CommitListener started")
