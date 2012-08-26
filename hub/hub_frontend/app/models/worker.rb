@@ -3,4 +3,5 @@ class Worker < ActiveRecord::Base
     :last_seen_at, :uuid, :state,
     :system, :architecture, :distribution, :capabilities, :platform
   belongs_to :metal
+  has_one :job
 end

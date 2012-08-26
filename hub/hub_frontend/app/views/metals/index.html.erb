@@ -7,17 +7,14 @@
     <th>Platform</th>
     <th>Last seen at</th>
     <th></th>
-    <th></th>
-    <th></th>
   </tr>
 
 <% @metals.each do |metal| %>
   <tr>
-    <td><%= metal.name %></td>
+    <td><%= link_to metal.name, metal %></td>
     <td><%= metal.state %></td>
     <td><%= metal.platform %></td>
     <td><%= metal.last_seen_at %></td>
-    <td><%= link_to 'Show', metal %></td>
     <td><%= link_to 'Destroy', metal, method: :delete, data: { confirm: 'Are you sure?' } %></td>
   </tr>
 <% end %>

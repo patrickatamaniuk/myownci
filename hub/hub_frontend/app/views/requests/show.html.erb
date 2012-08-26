@@ -14,3 +14,9 @@
   </p>
 <% } %>
 
+<h2>Jobs</h2>
+<% @request.jobs.each{|job| %>
+  <p>
+  <%= link_to job.id, job %> <%= job.state %>
+  </p>
+<% } %>

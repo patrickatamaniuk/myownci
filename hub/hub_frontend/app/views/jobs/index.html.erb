@@ -2,7 +2,7 @@
 
 <table>
   <tr>
-    <th>Worker</th>
+    <th>Id</th>
     <th>State</th>
     <th>Request</th>
     <th>Language</th>
@@ -11,20 +11,18 @@
     <th>Finished</th>
     <th>Worker</th>
     <th></th>
-    <th></th>
   </tr>
 
 <% @jobs.each do |job| %>
   <tr>
-    <td><%= job.id %></td>
+    <td><%= link_to job.id, job %></td>
     <td><%= job.state %></td>
-    <td><%= job.request.id %></td>
+    <td><%= link_to job.request.id, job.request if job.request %></td>
     <td><%= job.language %></td>
     <td><%= job.created_at %></td>
     <td><%= job.started_at %></td>
     <td><%= job.finished_at %></td>
-    <td><%= job.worker %></td>
-    <td><%= link_to 'Show', job %></td>
+    <td><%= link_to job.worker.name, job.worker if job.worker %></td>
     <td><%= link_to 'Destroy', job, method: :delete, data: { confirm: 'Are you sure?' } %></td>
   </tr>
 <% end %>

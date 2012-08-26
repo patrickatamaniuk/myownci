@@ -10,7 +10,7 @@
 
 <p>
   <b>Metal:</b>
-  <%= @worker.metal.name if @worker.metal %>
+  <%= link_to @worker.metal.name, @worker.metal if @worker.metal %>
 </p>
 
 <p>
@@ -26,6 +26,11 @@
 <p>
   <b>Snapshottag:</b>
   <%= @worker.snapshottag %>
+</p>
+
+<p>
+  <b>Current Job:</b>
+  <%= link_to @worker.job.id, @worker.job if @worker.job %>
 </p>
 
 

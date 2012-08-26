@@ -1,8 +1,17 @@
 <p id="notice"><%= notice %></p>
 
+<h1>Job <%= @job.id %></h1>
+<p>
+  <b>Request:</b>
+  <%= link_to @job.request.id, @job.request if @job.request %>
+</p>
+<p>
+  <b>State:</b>
+  <%= @job.state %>
+</p>
 <p>
   <b>Worker:</b>
-  <%= @job.worker %>
+  <%= link_to @job.worker.name, @job.worker if @job.worker %>
 </p>
 
 <%= link_to 'Back', jobs_path %>

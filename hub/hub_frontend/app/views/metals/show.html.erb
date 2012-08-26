@@ -24,7 +24,7 @@
   <b>Workers:</b>
   <% @metal.workers.each{|worker| %>
   <p>
-  <%= worker.name %>
+  <%= link_to worker.name, worker %>
   </p>
   <% } %>
 </p>

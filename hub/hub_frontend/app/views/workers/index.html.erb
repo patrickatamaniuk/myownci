@@ -10,18 +10,16 @@
     <th>Last seen</th>
     <th></th>
     <th></th>
-    <th></th>
   </tr>
 
 <% @workers.each do |worker| %>
   <tr>
-    <td><%= worker.name %></td>
+    <td><%= link_to worker.name, worker %></td>
     <td><%= worker.state %></td>
     <td><%= worker.capabilities %></td>
     <td><%= worker.platform %></td>
-    <td><%= worker.metal.name if worker.metal %></td>
+    <td><%= link_to worker.metal.name, worker.metal if worker.metal %></td>
     <td><%= worker.last_seen_at %></td>
-    <td><%= link_to 'Show', worker %></td>
     <td><%= link_to 'Edit', edit_worker_path(worker) %></td>
     <td><%= link_to 'Destroy', worker, method: :delete, data: { confirm: 'Are you sure?' } %></td>
   </tr>

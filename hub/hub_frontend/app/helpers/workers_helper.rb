@@ -2,8 +2,8 @@
 module WorkersHelper
   def WorkersHelper.update_from_metal_alive(metal, data)
       Rails.logger.info("Update worker from metal_alive #{data}")
-      name = data['nodename']
       return if data['host-uuid'].nil?
+      name = data['nodename']
       uuid = data['host-uuid']
       state = data['state']
       capabilities = data['capabilities']
@@ -19,7 +19,7 @@ module WorkersHelper
         :architecture => architecture,
         :platform => platform,
         :system => system,
-        :last_seen_at => Time.now
+#        :last_seen_at => Time.now
       }
 
       Rails.logger.info("Looking for worker #{uuid}")
@@ -32,6 +32,6 @@ module WorkersHelper
         worker.update_attributes(worker_data)
         worker.save
       end
-
   end
+
 end
