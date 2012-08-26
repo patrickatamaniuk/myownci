@@ -64,6 +64,11 @@ class Worker(AmqpBase, StateEngine):
                     'cmd': (0.1, self.event, ['ev_request_job'])
                 }
             },
+            'ev_got_job': {
+                'request_job': {
+                    'nextstate':'got_job'
+                }
+            }
         }, 'unconfigured')
 
         self.uuid = None
@@ -104,6 +109,9 @@ class Worker(AmqpBase, StateEngine):
             if 'update_config' == cmd:
                 body = simplejson.loads(body)
                 self.cmd_update_config(body)
+            elif 'perform_job' == cmd:
+                body = simplejson.loads(body)
+                self.cmd_perform_job(body)
 
         #ping request from metal
         elif 'ping' == cmd:
@@ -145,6 +153,10 @@ class Worker(AmqpBase, StateEngine):
         #debug(" [%s] added routing key %s" % (self.logkey, routing_key))
         self.event('ev_configured')
 
+    def cmd_perform_job(self, body):
+        debug(" [%s] job data: %r" % (self.logkey, body) )
+        info(" [%s] performing job %s" % (self.logkey, body['id']) )
+        self.event('ev_got_job')
 
 def main():
     logging.basicConfig(level=logging.DEBUG)
