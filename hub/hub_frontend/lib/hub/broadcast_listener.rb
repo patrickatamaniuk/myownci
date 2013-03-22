@@ -59,13 +59,13 @@ module Hub
       });
       job_candidates.each{|job|
         if workrequest[:capabilities].include?(job.language)
-          Rails.logger.info("Job candidate: #{job} #{job.language} #{workrequest[:capabilities]}")
+          Rails.logger.debug("Job candidate: #{job} #{job.language} #{workrequest[:capabilities]}")
           #give this worker the job
           dispatch_job_to_worker(worker, job)
           return
         end
       }
-      Rails.logger.warning("No worker found for job #{job.id}")
+      Rails.logger.warning("No job found for worker #{worker.id}") #FIXME send shutdown hint
     end
 
     def dispatch_job_to_worker(worker, job)
@@ -92,7 +92,8 @@ module Hub
         :checkout_url => "http://git.ci.example.net:/git/#{request.repo}",
         :commit => request.commit,
       }
-      Rails.logger.debug("[AMQP] Sending worker job #{job_data}")
+      Rails.logger.info("[AMQP] Sending worker #{worker.uuid} job #{job.id}")
+      #Rails.logger.debug("[AMQP] Sending job data #{job_data}")
       @exchange.publish(JSON.dump(job_data),
                        :routing_key => "perform_job.#{worker.uuid}"
                        )
